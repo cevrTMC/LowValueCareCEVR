@@ -56,6 +56,8 @@
 							or ('75552'<=:cptcode<=:'75564')
 							or ('78451'<=:cptcode<=:'78454')
 							or ('93015'<=:cptcode<=:'93018');
+%let maxillofacialCT_cond = cptcode in ('70486', '70487', '70488');
+
 
 /* diagnosis code condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -138,6 +140,13 @@
 						('X00'<=:dxcode<=:'X99') or
 						('Y00'<=:dxcode<=:'Y69');
 %let crc_cancer_dx_cond = dxcode in :('C18');
+%let sinusitis_dx_cond = dxcode in :('J01','J32');
+%let other_related_comp_dx_cond = (dxcode in :('B20', 'B9735', 'D80', 'D810', 'D811', 'D812', 'D814', 
+											'D816', 'D817', 'D8189', 'D819', 'D893', 'D894', 
+											'D898', 'E84', 'H00', 'H01', 'H0500', 'J33', 'L0889', 'M359', 
+											 'S16', 'S19')) or
+									('D82'<=:dxcode<=:'D84') or
+									('S00'<=:dxcode<=:'S16');	
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -161,7 +170,8 @@
 				  fracture_vd_dx fracture_vd
 				  echocardiogram
 				  pulmonary
-				  eenc;
+				  eenc
+				  maxillofacialCT sinusitis_dx other_related_comp_dx;
 
 %macro flag(clmtype=,year=, chunk=,);
 data lvc_etl.&clmtype._&year._&chunk._flag;
@@ -193,6 +203,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &echocardiogram_cond then echocardiogram=1;
 			if &pulmonary_cond then pulmonary=1;
 			if &eenc_cond then eenc=1;
+			if &maxillofacialCT_cond then maxillofacialCT=1;
 	  end;
 	end;
 
@@ -218,6 +229,8 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &imglbp_exc_dx_cond  then imglbp_exc_dx=1;
 			if &crc_cancer_dx_cond  then crc_cancer_dx=1;
 			if &fracture_vd_dx_cond then fracture_vd_dx=1;
+			if &sinusitis_dx_cond then sinusitis_dx=1;
+			if &other_related_comp_dx_cond then other_related_comp_dx=1;
 	  end;
 	end;
 	
@@ -232,10 +245,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 		end;
 	
 	%end;
-/*
-	if (dialysis_dx = 1 or dialysis_betos=1) then dialysis=1;
-	if (fracture_dx=1 or fracture_cpt=1) then fracture=1;
-*/
+
 	dialysis = (dialysis_dx or dialysis_betos);
 	fracture = (fracture_dx or fracture_cpt);
 	fracture_vd = (fracture_vd_dx or fracture_cpt);
@@ -367,7 +377,10 @@ run;
 	 low_risk_noncard = 'low or intermediate risk non-cardiothoracic surgical procedure, (HCPCS and BETOS)'
 	 echocardiogram = 'HCPCS:echocardiogram' 
 	 pulmonary = 'HCPCS: pulmonary function test (PFT)'
-	 eenc = 'HCPCS: electrocardiogram, echocardiogram, nuclear medicine imaging, cardiac MRI or CT angiography' 
+	 eenc = 'HCPCS: electrocardiogram, echocardiogram, nuclear medicine imaging, cardiac MRI or CT angiography'
+	 maxillofacialCT= 'HCPCS: CT of maxillofacial area'
+	 sinusitis_dx ='ICD-10:sinusitis'
+	 other_related_comp_dx="ICD-10:other related complications for algorithm 14"
 	;
 	drop betos;
 	run;

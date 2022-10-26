@@ -45,14 +45,15 @@ value sexfmt
 
 run;
 
-*** Find the first claim date, first claim date in the window, and last claim date for each comorbidity;
+*** Find the first claim date, first claim date in the window, and last claim date for each comorbidity/service;
 %let hist_conditions prostate_dx cerv_ex crc_dx dialysis hypothyroidism_dx
 					 embolism_dx osteoporosis_dx cancer_dx fracture fracture_vd
 					 chronic_dx other_risk_dx pregnancy_obesity_dx
 					imglbp_inc_dx imglbp_exc_dx
 					bonemd crc_cancer_dx
-					low_risk_noncard;
-%Let Dim_Var = 18;
+					low_risk_noncard
+					sinusitis_dx;
+%Let Dim_Var = 19;
 
 %macro FindFirstDxDate();
 *** Sort claims by ID and date of claim;

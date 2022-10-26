@@ -381,6 +381,39 @@ run;
 %mend prep_eenc;
 
 
+/*
+Algorithm 14: mfct(maxillofacial CT study)
+
+Do not perform maxillofacial CT study with a diagnosis of sinusitis and no other complications and no sinusitis diagnosis within 30 to 365 days before CT
+
+Denominator: Patients with sinusitis and with no other related complications and with no prior sinusitis diagnosis
+Other related complications: complications of sinusitis, immune deficiencies, nasal polyps, head/face trauma
+*/
+
+%let vars_mfct=desy_sort_key npi src bene_race_cd clm_dt lvc maxillofacialCT sinusitis_dx 
+			   other_related_comp_dx last_sinusitis_dx;
+
+%macro prep_mfct();
+
+data output.mfct_sensitive(keep=&vars_mfct);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=0;
+if maxillofacialCT=1 then lvc=1;
+if sinusitis_dx=1; 
+run;
+
+data output.mfct_specific;
+set output.mfct_sensitive;
+/*no other complication and Prior sinusitis diagnosis not within 30 to 365 days before CT*/
+if other_related_comp_dx=0 and 
+(not (last_sinusitis_dx>. and 30<=(clm_dt - last_sinusitis_dx)<=365)); 
+run;
+
+%patient_level_output(output.mfct_sensitive, output.mfct_sensitive_patient);
+%patient_level_output(output.mfct_specific, output.mfct_specific_patient);
+
+%mend prep_mfct;
+
 proc datasets library=output kill;
 run;
 quit;
@@ -398,4 +431,5 @@ quit;
 /*11*/%prep_echo();
 /*12*/%prep_pft();
 /*13*/%prep_eenc();
+/*14*/%prep_mfct();
 %listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");
