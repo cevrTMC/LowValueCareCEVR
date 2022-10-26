@@ -211,7 +211,7 @@ run;
 %patient_level_output(output.bonemd_specific, output.bonemd_specific_patient);
 %mend prep_bonemd;
 
-/*
+/**************************************************
 algorithm 8: hypercoagula (hypercoagulability test)
 
 Don’t perform  hypercoagulability test in patients with deep vein thrombosis (DVT) with a known cause
@@ -232,7 +232,7 @@ run;
 %patient_level_output(output.hypercoagula_sensitive, output.hypercoagula_sensitive_patient);
 %mend prep_hypercoagula;
 
-/*
+/**************************************************
 algorithm 9: t3 (T3 level)
 
 Don’t perform a total or free T3 level when assessing levothyroxine (T4) dose in 
@@ -255,16 +255,147 @@ run;
 %mend prep_t3;
 
 
+/**************************************************
+algorithm 10: xray (X-ray)
+
+Do not perform a chest X-ray not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure
+Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
+
+Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
+*/
+
+%let vars_xray desy_sort_key npi src bene_race_cd clm_dt lvc xray emergencycare 
+	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
+
+%macro prep_xray();
+
+data output.xray_sensitive(keep=&vars_xray);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=0;
+if xray=1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
+if first_low_risk_noncard>. or next_low_risk_noncard>.; 
+run;
+
+/* not emergency care, not inpatient*/
+data output.xray_specific;
+set output.xray_sensitive;
+if emergencycare=0 and (src in ('OP','CR'));
+run;
+
+%patient_level_output(output.xray_sensitive, output.xray_sensitive_patient);
+%patient_level_output(output.xray_specific, output.xray_specific_patient);
+
+%mend prep_xray;
 
 
-%prep_psa();
-%prep_cerv(); 
-%prep_vd();
-%prep_lbp();
-%prep_crc();
-%prep_canscrn();
-%prep_bonemd();
-%prep_hypercoagula();
-%prep_t3();
+/**************************************************
+algorithm 11: echo (echocardiogram)
 
+Do not perform an echocardiogram not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure
+
+Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
+*/
+
+%let vars_echo desy_sort_key npi src bene_race_cd clm_dt lvc echocardiogram emergencycare 
+	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
+
+%macro prep_echo();
+
+data output.echo_sensitive(keep=&vars_echo);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=0;
+if echocardiogram =1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
+if first_low_risk_noncard>. or next_low_risk_noncard>.; 
+run;
+
+/* no cancer patients, no fracture within 2 years of service*/
+data output.echo_specific;
+set output.echo_sensitive;
+if emergencycare=0 and (src in ('OP','CR'));;
+run;
+
+%patient_level_output(output.echo_sensitive, output.echo_sensitive_patient);
+%patient_level_output(output.echo_specific, output.echo_specific_patient);
+
+%mend prep_echo;
+
+
+/**************************************************
+algorithm 12: pft (pulmonary function test)
+
+Do not perform a pulmonary function test (PFT) not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure
+
+Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
+*/
+
+%let vars_pft desy_sort_key npi src bene_race_cd clm_dt lvc pulmonary emergencycare 
+	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
+
+%macro prep_pft();
+data output.pft_sensitive(keep=&vars_pft);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=0;
+if pulmonary =1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
+if first_low_risk_noncard>. or next_low_risk_noncard>.; 
+run;
+
+/* no cancer patients, no fracture within 2 years of service*/
+data output.pft_specific;
+set output.pft_sensitive;
+if emergencycare=0 and (src ne 'IP');
+run;
+
+%patient_level_output(output.pft_sensitive, output.pft_sensitive_patient);
+%patient_level_output(output.pft_specific, output.pft_specific_patient);
+
+%mend prep_pft;
+
+/**************************************************
+algorithm 13: eenc (Electrocardiogram, Echocardiogram, Nuclear medicine imaging, Cardiac MRI or CT )
+
+Do not perform electrocardiogram, echocardiogram, nuclear medicine imaging, cardiac MRI or CT angiography not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure
+
+Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
+*/
+
+%let vars_eenc desy_sort_key npi src bene_race_cd clm_dt lvc eenc emergencycare 
+	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
+
+%macro prep_eenc();
+
+data output.eenc_sensitive(keep=&vars_eenc);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=0;
+if eenc =1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
+if first_low_risk_noncard>. or next_low_risk_noncard>.;  
+run;
+
+/* no cancer patients, no fracture within 2 years of service*/
+data output.eenc_specific;
+set output.eenc_sensitive;
+if emergencycare=0 and (src ne 'IP');;
+run;
+
+%patient_level_output(output.eenc_sensitive, output.eenc_sensitive_patient);
+%patient_level_output(output.eenc_specific, output.eenc_specific_patient);
+%mend prep_eenc;
+
+
+proc datasets library=output kill;
+run;
+quit;
+
+/*1*/%prep_psa();
+/*2*/%prep_cerv(); 
+/*3*/%prep_vd();
+/*4*/%prep_lbp();
+/*5*/%prep_crc();
+/*6*/%prep_canscrn();
+/*7*/%prep_bonemd();
+/*8*/%prep_hypercoagula();
+/*9*/%prep_t3();
+/*10*/%prep_xray();
+/*11*/%prep_echo();
+/*12*/%prep_pft();
+/*13*/%prep_eenc();
 %listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");

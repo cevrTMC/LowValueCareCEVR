@@ -50,7 +50,7 @@
 %let echocardiogram_cond = (cptcode in ('93303', '93304', '93312', '93315', '93318'))
 					       or ('93306'<=:cptcode<=:'93308');
 %let pulmonary_cond = cptcode in ('94010');
-%let eenic_cond = cptcode in (('75574', '78460', '78461', '78464',
+%let eenc_cond = cptcode in (('75574', '78460', '78461', '78464',
 							'78465', '78472', '78473', '78481', '78483', '78491', '78492',
 							'93350', '93351', '0146T', '0147T', '0148T', '0149T'))
 							or ('75552'<=:cptcode<=:'75564')
@@ -161,7 +161,7 @@
 				  fracture_vd_dx fracture_vd
 				  echocardiogram
 				  pulmonary
-				  eenic;
+				  eenc;
 
 %macro flag(clmtype=,year=, chunk=,);
 data lvc_etl.&clmtype._&year._&chunk._flag;
@@ -192,7 +192,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &low_risk_noncard_cpt_cond then low_risk_noncard_cpt=1;
 			if &echocardiogram_cond then echocardiogram=1;
 			if &pulmonary_cond then pulmonary=1;
-			if &eenic_cond then eenic=1;
+			if &eenc_cond then eenc=1;
 	  end;
 	end;
 
@@ -367,7 +367,7 @@ run;
 	 low_risk_noncard = 'low or intermediate risk non-cardiothoracic surgical procedure, (HCPCS and BETOS)'
 	 echocardiogram = 'HCPCS:echocardiogram' 
 	 pulmonary = 'HCPCS: pulmonary function test (PFT)'
-	 eenic = 'HCPCS: electrocardiogram, echocardiogram, nuclear medicine imaging, cardiac MRI or CT angiography' 
+	 eenc = 'HCPCS: electrocardiogram, echocardiogram, nuclear medicine imaging, cardiac MRI or CT angiography' 
 	;
 	drop betos;
 	run;
