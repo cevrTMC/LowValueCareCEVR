@@ -232,9 +232,12 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 		end;
 	
 	%end;
-
+/*
 	if (dialysis_dx = 1 or dialysis_betos=1) then dialysis=1;
 	if (fracture_dx=1 or fracture_cpt=1) then fracture=1;
+*/
+	dialysis = (dialysis_dx or dialysis_betos);
+	fracture = (fracture_dx or fracture_cpt);
 	fracture_vd = (fracture_vd_dx or fracture_cpt);
 	bonemd=(bonemd_cpt or dxa_dx);
 	low_risk_noncard = (low_risk_noncard_cpt or low_risk_noncard_betos);

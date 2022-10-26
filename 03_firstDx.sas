@@ -138,6 +138,7 @@ run;
 
 %mend collapse;
 
+/*output analytic data, tranfrom to STATA format */
 %macro patient_level_output(input,output);
 
 /*reformat race */
@@ -152,7 +153,6 @@ gender_numeric = input(gndr_cd, 2.);
 format gender_numeric sexfmt.;
 drop gndr_cd;
 rename gender_numeric=gender;
-
 
 run;
 
