@@ -156,6 +156,20 @@
 									('S08'<=:dxcode<=:'S10') or 
 									('S00'<=:dxcode<=:'S02') or
 									('R25'<=:dxcode<=:'R29');
+%let headache_dx_cond = dxcode in :('G430', 'G431', 'G435', 'G437', 'G438', 'G439', 'G43A', 'G43B', 
+									'G43C', 'G43D', 'G440', 'G441', 'G442', 'G444', 'G4451', 'G4452',
+									'G4459', 'G448', 'R51');
+%let warranted_img2_dx_cond = (dxcode in :('G40', 'G434', 'G436', 'G443', 'G4453', 
+							'G45', 'G46', 'L0889', 'M315', 'M316', 'Q85', 'R20', 'R410',
+							'R414', 'R4182', 'R41842', 'R43', 'R47', 'R56', 'R683', 'S05', 'S06', 
+							'S16', 'S19', 'Z85', 'Z8673')) or
+							('C00'<=:dxcode<=:'C99') or
+							('D00'<=:dxcode<=:'D09') or
+							('D37'<=:dxcode<=:'D49') or
+							('I60'<=:dxcode<=:'I69') or
+							('R25'<=:dxcode<=:'R29') or
+							('S08'<=:dxcode<=:'S10') or 
+							('S00'<=:dxcode<=:'S02');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -181,7 +195,8 @@
 				  pulmonary
 				  eenc
 				  maxillofacialCT sinusitis_dx other_related_comp_dx
-				  headimg syncope_dx warranted_img_dx;
+				  headimg syncope_dx warranted_img_dx
+				  headache_dx warranted_img2_dx;
 
 %macro flag(clmtype=,year=, chunk=,);
 data lvc_etl.&clmtype._&year._&chunk._flag;
@@ -244,6 +259,8 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &other_related_comp_dx_cond then other_related_comp_dx=1;
 			if &syncope_dx_cond then syncope_dx=1;
 			if &warranted_img_dx_cond then warranted_img_dx=1;
+			if &headache_dx_cond then headache_dx=1;
+			if &warranted_img2_dx_cond then warranted_img2_dx=1;
 	  end;
 	end;
 	
@@ -397,6 +414,8 @@ run;
 	 headimg = "HCPCS: CT or MRI of head or brain"
 	 syncope_dx="ICD-10:syncope"
 	 warranted_img_dx="ICD-10:Diagnoses for warranted imaging: epilepsy or convulsions, cerebrovacular diseases including stroke/TIA and subarachnoid hemorrhage, head or face trauma, altered mental status, nervous and musculoskeletal system symptoms including gait abnormality, meningismus, disturbed skin sensation and speech deficits, personal history of stroke/TIA"
+	 headache_dx="ICD-10:diagnosis for headache"
+	 warranted_img2_dx="ICD-10: Patients with headache and no other diagnosis for warranted imaging. Diagnoses for warranted imaging: post-tramatic or thunderclap headache, cancer, migraine with hemiplegia or infarction, giant cell arteritis, epilepsy or convulsions, cerebrovascular diseases including stroke/TIA and subarachnoid hemorrhage, head or face trauma, altered mental status, nervous and musculoskeletal system symptoms including gait abnormality, meningismus, disturbed skin sensation and speech deficits, personal history of stroke/TIA or cancer"
 	;
 	drop betos;
 	run;

@@ -3,8 +3,6 @@ prepare analytic data for each of 23 Low-value care service analyses
 */
 
 
-libname output ("C:\Users\lliang1\Documents\My SAS Files\9.4\output");
-
 /**************************************************
 algorithm 1. PSA (PSA test)
 
@@ -446,6 +444,36 @@ run;
 %mend prep_headimg;
 
 
+/*
+Algorithm 16: headimg2 (CT or MRI of head or brain)
+
+Do not perform brain CT or MRI imaging for non-post-traumatic, nonthunderclap headache diagnosis without another diagnosis for warranted imaging.
+
+Patients with headache and no other diagnosis for warranted imaging. Diagnoses for warranted imaging: post-tramatic or thunderclap headache, cancer, migraine with hemiplegia or infarction, giant cell arteritis, epilepsy or convulsions, cerebrovascular diseases including stroke/TIA and subarachnoid hemorrhage, head or face trauma, altered mental status, nervous and musculoskeletal system symptoms including gait abnormality, meningismus, disturbed skin sensation and speech deficits, personal history of stroke/TIA or cancer
+*/
+
+%let vars_headimg2 = desy_sort_key npi src bene_race_cd clm_dt lvc 
+					headimg headache_dx warranted_img2_dx;
+
+%macro prep_headimg2();
+
+data output.headimg2_sensitive(keep=&vars_headimg2);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=headimg;
+if headache_dx=1;	
+run;
+
+data output.headimg2_specific;
+set output.headimg2_sensitive;
+if warranted_img2_dx=0;
+run;
+
+%patient_level_output(output.headimg2_sensitive, output.headimg2_sensitive_patient);
+%patient_level_output(output.headimg2_specific, output.headimg2_specific_patient);
+
+%mend prep_headimg2;
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -465,5 +493,6 @@ quit;
 /*13*/%prep_eenc();
 /*14*/%prep_mfct();
 /*15*/%prep_headimg();	
+/*16*/%prep_headimg2();	
 
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/

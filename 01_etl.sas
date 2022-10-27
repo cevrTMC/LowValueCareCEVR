@@ -1,8 +1,8 @@
 ﻿*options dlcreatedir;
 
-libname lvc_src 'C:\Users\lliang1\Documents\My SAS Files\9.4\lvc';
-libname lvc_etl 'C:\Users\lliang1\Documents\My SAS Files\9.4\lvc_etl';
 libname ccw 'C:\Users\lliang1\Documents\My SAS Files\9.4\ccw'; 
+libname lvc_etl 'C:\Users\lliang1\Documents\My SAS Files\9.4\lvc_etl';
+libname output 'C:\Users\lliang1\Documents\My SAS Files\9.4\output';
 
 proc datasets library=lvc_etl kill;
 run;
