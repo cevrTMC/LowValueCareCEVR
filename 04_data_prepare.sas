@@ -414,6 +414,38 @@ run;
 
 %mend prep_mfct;
 
+
+/*
+Algorithm 15: headimg (CT or MRI of head or brain)
+
+Do not perform CT or MRI imaging for a diagnosis of syncope without another diagnosis for warranted imaging
+
+Denominator:Patients with syncope and without a diagnosis for warranted imaging. 
+Diagnoses for warranted imaging: epilepsy or convulsions, cerebrovacular diseases including stroke/TIA and subarachnoid hemorrhage, head or face trauma, altered mental status, nervous and musculoskeletal system symptoms including gait abnormality, meningismus, disturbed skin sensation and speech deficits, personal history of stroke/TIA
+*/
+
+%let vars_headimg = desy_sort_key npi src bene_race_cd clm_dt lvc 
+					headimg syncope_dx warranted_img_dx;
+
+%macro prep_headimg();
+
+data output.headimg_sensitive(keep=&vars_headimg);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=headimg;
+if syncope_dx=1;	
+run;
+
+data output.headimg_specific;
+set output.headimg_sensitive;
+if warranted_img_dx=0;
+run;
+
+%patient_level_output(output.headimg_sensitive, output.headimg_sensitive_patient);
+%patient_level_output(output.headimg_specific, output.headimg_specific_patient);
+
+%mend prep_headimg;
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -432,4 +464,6 @@ quit;
 /*12*/%prep_pft();
 /*13*/%prep_eenc();
 /*14*/%prep_mfct();
-%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");
+/*15*/%prep_headimg();	
+
+/*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/

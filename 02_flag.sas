@@ -5,7 +5,7 @@
 
 %let num_cd = 200;
 
-/* lvc procedure codes*/
+/* procedure condition*/
 %let psa_cond = cptcode in ('G0103', '84152', '84153', '84154') ;
 %let cerv_cond = cptcode in ('G0123', 'G0124', 'G0141', 'G0143', 
 				'G0144', 'G0145', 'G0147', 'G0148', 
@@ -50,16 +50,17 @@
 %let echocardiogram_cond = (cptcode in ('93303', '93304', '93312', '93315', '93318'))
 					       or ('93306'<=:cptcode<=:'93308');
 %let pulmonary_cond = cptcode in ('94010');
-%let eenc_cond = cptcode in (('75574', '78460', '78461', '78464',
+%let eenc_cond = (cptcode in ('75574', '78460', '78461', '78464',
 							'78465', '78472', '78473', '78481', '78483', '78491', '78492',
 							'93350', '93351', '0146T', '0147T', '0148T', '0149T'))
 							or ('75552'<=:cptcode<=:'75564')
 							or ('78451'<=:cptcode<=:'78454')
 							or ('93015'<=:cptcode<=:'93018');
 %let maxillofacialCT_cond = cptcode in ('70486', '70487', '70488');
+%let headimg_cond = (cptcode in ('70450', '70460', '70470'))
+					 or ('70551'<=:cptcode<=:'70553');
 
-
-/* diagnosis code condition */
+/* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
 %let canscrn_dx_cond=dxcode in :('Z121','Z123','Z124','Z125');
 
@@ -147,6 +148,14 @@
 											 'S16', 'S19')) or
 									('D82'<=:dxcode<=:'D84') or
 									('S00'<=:dxcode<=:'S16');	
+%let syncope_dx_cond = dxcode in :('R55', 'T671XXA');
+%let warranted_img_dx_cond=(dxcode in :('G40', 'G45', 'G46', 'L0889', 'R20', 
+									'R410', 'R414', 'R4182', 'R43', 'R47', 'R56', 'R683', 
+									'S05', 'S06', 'S16', 'S19', 'Z85', 'Z8673')) or
+									('I60'<=:dxcode<=:'I69') or
+									('S08'<=:dxcode<=:'S10') or 
+									('S00'<=:dxcode<=:'S02') or
+									('R25'<=:dxcode<=:'R29');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -171,7 +180,8 @@
 				  echocardiogram
 				  pulmonary
 				  eenc
-				  maxillofacialCT sinusitis_dx other_related_comp_dx;
+				  maxillofacialCT sinusitis_dx other_related_comp_dx
+				  headimg syncope_dx warranted_img_dx;
 
 %macro flag(clmtype=,year=, chunk=,);
 data lvc_etl.&clmtype._&year._&chunk._flag;
@@ -204,6 +214,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &pulmonary_cond then pulmonary=1;
 			if &eenc_cond then eenc=1;
 			if &maxillofacialCT_cond then maxillofacialCT=1;
+			if &headimg_cond then headimg=1;
 	  end;
 	end;
 
@@ -231,6 +242,8 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &fracture_vd_dx_cond then fracture_vd_dx=1;
 			if &sinusitis_dx_cond then sinusitis_dx=1;
 			if &other_related_comp_dx_cond then other_related_comp_dx=1;
+			if &syncope_dx_cond then syncope_dx=1;
+			if &warranted_img_dx_cond then warranted_img_dx=1;
 	  end;
 	end;
 	
@@ -381,6 +394,9 @@ run;
 	 maxillofacialCT= 'HCPCS: CT of maxillofacial area'
 	 sinusitis_dx ='ICD-10:sinusitis'
 	 other_related_comp_dx="ICD-10:other related complications for algorithm 14"
+	 headimg = "HCPCS: CT or MRI of head or brain"
+	 syncope_dx="ICD-10:syncope"
+	 warranted_img_dx="ICD-10:Diagnoses for warranted imaging: epilepsy or convulsions, cerebrovacular diseases including stroke/TIA and subarachnoid hemorrhage, head or face trauma, altered mental status, nervous and musculoskeletal system symptoms including gait abnormality, meningismus, disturbed skin sensation and speech deficits, personal history of stroke/TIA"
 	;
 	drop betos;
 	run;
