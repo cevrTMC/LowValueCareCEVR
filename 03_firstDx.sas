@@ -52,38 +52,41 @@ run;
 					imglbp_inc_dx imglbp_exc_dx
 					bonemd crc_cancer_dx
 					low_risk_noncard
-					sinusitis_dx;
-%Let Dim_Var = 19;
+					sinusitis_dx
+					eeg_headache_dx
+					epilepsy_dx
+					neurologic_dx
+					syncope_dx;
+%Let Dim_Var = 23;
 
 %macro FindFirstDxDate();
 *** Sort claims by ID and date of claim;
 proc sort data=lvc_etl.claims_all_flag;
- by desy_sort_key clm_dt;
+	by desy_sort_key clm_dt;
 run;
 
 data lvc_etl.claims_all_flag_firstDx;
- set lvc_etl.claims_all_flag;
+	set lvc_etl.claims_all_flag;
+	by desy_sort_key clm_dt;
 
- by desy_sort_key clm_dt;
+ 	%DO i=1 %TO &Dim_Var.;
+ 		%let cond = %scan(&hist_conditions,&i,", ");
+	
+ 		if first.desy_sort_key then do; 
+			&cond._date=.; first_&cond.=.; last_&cond.=.;prev_&cond.=.; 
+ 		end;
+ 		retain first_&cond. last_&cond. hosp_&cond. prev_&cond.;
 
- %DO i=1 %TO &Dim_Var.;
- %let cond = %scan(&hist_conditions,&i,", ");
+ 		if &cond then do;
+  			prev_&cond. = last_&cond.;
+  			&cond._date = clm_dt;
+  			if first_&cond.=. then first_&cond. = clm_dt; 
+  			last_&cond. = clm_dt;
+ 		end;
 
- if first.desy_sort_key then do; 
-	&cond._date=.; first_&cond.=.; last_&cond.=.;prev_&cond.=.; 
- end;
- retain first_&cond. last_&cond. hosp_&cond. prev_&cond.;
-
- if &cond then do;
-  prev_&cond. = last_&cond.;
-  &cond._date = clm_dt;
-  if first_&cond.=. then first_&cond. = clm_dt; 
-  last_&cond. = clm_dt;
- end;
- %end;
- format DOB_DT agefmt. gndr_cd $genderfmt. bene_race_cd $racefmt.;
- format clm_dt &cond._date first_&cond. last_&cond. prev_&cond. mmddyy10.;
-
+ 		format clm_dt &cond._date first_&cond. last_&cond. prev_&cond. mmddyy10.;
+ 	%end;
+ 	format DOB_DT agefmt. gndr_cd $genderfmt. bene_race_cd $racefmt.;
 run;
 
 %mend FindFirstDxDate;
@@ -94,31 +97,30 @@ run;
 %macro nextDxDate(input);
 *** Sort claims by ID and date of claim;
 proc sort data=&input.;
- by desy_sort_key descending clm_dt;
+ 	by desy_sort_key descending clm_dt;
 run;
 
 data &input._nextDx;
- set &input.;
+ 	set &input.;
+	by desy_sort_key descending clm_dt;
 
- by desy_sort_key descending clm_dt;
+ 	%DO i=1 %TO &Dim_nextVar.;
+ 		%let cond = %scan(&next_conditions,&i,", ");
 
- %DO i=1 %TO &Dim_nextVar.;
- %let cond = %scan(&next_conditions,&i,", ");
+ 		if first.desy_sort_key then do; 
+			next_&cond.=.; 
+ 		end;
+ 		retain next_&cond. ;
 
- if first.desy_sort_key then do; 
-	next_&cond.=.; 
- end;
- retain next_&cond. ;
-
- if &cond then do;
-  next_&cond. = clm_dt;
- end;
- %end;
- format clm_dt next_&cond. mmddyy10.;
+ 	if &cond then do;
+ 		 next_&cond. = clm_dt;
+ 	end;
+ 	format clm_dt next_&cond. mmddyy10.;
+ 	%end;
 run;
 
 proc sort data=&input._nextDx;
- by desy_sort_key clm_dt;
+	by desy_sort_key clm_dt;
 run;
 
 %mend nextDxDate;
@@ -127,14 +129,14 @@ run;
 /* list all patient ids with flag indicating whether the patient had ever received the lvc */
 %macro collapse(input, flag, output);
 proc sort data=&input. out=&output.;
-by desy_sort_key descending &flag.;
+	by desy_sort_key descending &flag.;
 run;
 
 data &output.(keep=desy_sort_key race num);
- set &output.;
- by desy_sort_key;
- num = &flag.;
- if first.desy_sort_key then output;
+ 	set &output.;
+ 	by desy_sort_key;
+ 	num = &flag.;
+ 	if first.desy_sort_key then output;
 run;
 
 %mend collapse;
@@ -144,17 +146,16 @@ run;
 
 /*reformat race */
 data tmp;
-set &input.;
-race_numeric = input(BENE_RACE_CD, 2.);
-format race_numeric racefmt.;
-drop BENE_RACE_CD;
-rename race_numeric=race;
+	set &input.;
+	race_numeric = input(BENE_RACE_CD, 2.);
+	format race_numeric racefmt.;
+	drop BENE_RACE_CD;
+	rename race_numeric=race;
 
-gender_numeric = input(gndr_cd, 2.);
-format gender_numeric sexfmt.;
-drop gndr_cd;
-rename gender_numeric=gender;
-
+	gender_numeric = input(gndr_cd, 2.);
+	format gender_numeric sexfmt.;
+	drop gndr_cd;
+	rename gender_numeric=gender;
 run;
 
 %collapse(tmp,lvc, &output.);
@@ -164,15 +165,15 @@ table num /missing;
 run;
 
 PROC EXPORT DATA=tmp
-OUTFILE="&outdir\&input..dta"			
-DBMS=dta REPLACE;
-fmtlib=work.formats;
+	OUTFILE="&outdir\&input..dta"			
+	DBMS=dta REPLACE;
+	fmtlib=work.formats;
 RUN;
 
 PROC EXPORT DATA=&output.
-OUTFILE="&outdir\&output..dta"			
-DBMS=dta REPLACE;
-fmtlib=work.formats;
+	OUTFILE="&outdir\&output..dta"			
+	DBMS=dta REPLACE;
+	fmtlib=work.formats;
 RUN;
 
 %mend patient_level_output;

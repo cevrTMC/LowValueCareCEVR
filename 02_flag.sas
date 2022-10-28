@@ -59,6 +59,9 @@
 %let maxillofacialCT_cond = cptcode in ('70486', '70487', '70488');
 %let headimg_cond = (cptcode in ('70450', '70460', '70470'))
 					 or ('70551'<=:cptcode<=:'70553');
+%let eeg_cond = cptcode in ('95812', '95813', '95816', '95819', '95822', '95827', '95830', '95957');
+%let carotid_cond = (cptcode in ('70498', '93880', '93882', '3100F'))  
+					 or ('70547'<=:cptcode<=:'70549');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -170,6 +173,16 @@
 							('R25'<=:dxcode<=:'R29') or
 							('S08'<=:dxcode<=:'S10') or 
 							('S00'<=:dxcode<=:'S02');
+%let eeg_headache_dx_cond = dxcode in :('G43', 'G44', 'R51');
+%let epilepsy_dx_cond = dxcode in :('G40', 'R25', 'R56');
+%let stroke_etc_dx_cond = dxcode in :('G45', 'G460', 'G461', 'G462', 'G819', 'G9731', 'G9732', 
+									'H34', 'H3582', 'I60', 'I61', 'I63', 'I66', 'I652', 'I672', 
+									'I67841', 'I67848', 'I6789', 'I978', 'R098', 'R20', 'R220', 
+									'R221', 'R25', 'R26', 'R27', 'R29', 'R414', 'R43', 'R47', 
+									'R55', 'R683', 'R900', 'Z8673');
+%let neurologic_dx_cond = dxcode in :('G45', 'G460', 'G461', 'G462', 'G973', 'H34', 'H3582', 'I60', 
+									'I61', 'I63', 'I66', 'I6784', 'I6789', 'I9781', 'I9782', 'R20', 
+									'R25', 'R26', 'R27', 'R29', 'R414', 'R43', 'R47', 'R683', 'Z8673');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -196,7 +209,11 @@
 				  eenc
 				  maxillofacialCT sinusitis_dx other_related_comp_dx
 				  headimg syncope_dx warranted_img_dx
-				  headache_dx warranted_img2_dx;
+				  headache_dx warranted_img2_dx
+				  eeg eeg_headache_dx epilepsy_dx
+			  	  carotid stroke_etc_dx
+				  neurologic_dx
+				;
 
 %macro flag(clmtype=,year=, chunk=,);
 data lvc_etl.&clmtype._&year._&chunk._flag;
@@ -230,6 +247,8 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &eenc_cond then eenc=1;
 			if &maxillofacialCT_cond then maxillofacialCT=1;
 			if &headimg_cond then headimg=1;
+			if &eeg_cond then eeg =1;
+			if &carotid_cond then carotid=1;
 	  end;
 	end;
 
@@ -261,6 +280,10 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &warranted_img_dx_cond then warranted_img_dx=1;
 			if &headache_dx_cond then headache_dx=1;
 			if &warranted_img2_dx_cond then warranted_img2_dx=1;
+			if &eeg_headache_dx_cond then eeg_headache_dx=1;
+			if &epilepsy_dx_cond then epilepsy_dx=1;
+			if &stroke_etc_dx_cond then stroke_etc_dx=1;
+			if &neurologic_dx_cond then neurologic_dx=1;
 	  end;
 	end;
 	
@@ -414,8 +437,14 @@ run;
 	 headimg = "HCPCS: CT or MRI of head or brain"
 	 syncope_dx="ICD-10:syncope"
 	 warranted_img_dx="ICD-10:Diagnoses for warranted imaging: epilepsy or convulsions, cerebrovacular diseases including stroke/TIA and subarachnoid hemorrhage, head or face trauma, altered mental status, nervous and musculoskeletal system symptoms including gait abnormality, meningismus, disturbed skin sensation and speech deficits, personal history of stroke/TIA"
-	 headache_dx="ICD-10:diagnosis for headache"
+	 headache_dx="ICD-10:diagnoses for headache"
 	 warranted_img2_dx="ICD-10: Patients with headache and no other diagnosis for warranted imaging. Diagnoses for warranted imaging: post-tramatic or thunderclap headache, cancer, migraine with hemiplegia or infarction, giant cell arteritis, epilepsy or convulsions, cerebrovascular diseases including stroke/TIA and subarachnoid hemorrhage, head or face trauma, altered mental status, nervous and musculoskeletal system symptoms including gait abnormality, meningismus, disturbed skin sensation and speech deficits, personal history of stroke/TIA or cancer"
+	 eeg = "HCPCS:electroencephalogram (EEG)"
+	 eeg_headache_dx = "ICD-10: diagnoses for headache, asoociated with EEG LVC labeling"
+	 epilepsy_dx="ICD-10:epilepsy or convulsions"
+	 carotid = "HCPCS: carotid imaging "
+	 stroke_etc_dx="ICD-10: stroke/TIA, retinal vascular occlusion/ischemia, or nervous and musculoskeletal symptoms, asoociated with carotic LVC labeling"
+	 neurologic_dx="ICD-10:Other neurologic symptoms: stroke or TIA, history of stroke or TIA, retinal vascular occlusion or ischemia, or nervous or musculoskeletal symptoms"
 	;
 	drop betos;
 	run;

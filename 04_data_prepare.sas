@@ -474,6 +474,39 @@ run;
 %mend prep_headimg2;
 
 
+/*
+Algorithm 17: eeg (electroencephalogram)
+
+Do not perform an EEG for headache diagnosis without epilepsy or convulsions noted in current or prior claims
+
+Denominator:Patients with headaches and no indication of epilepsy or convulsions within 1 year before EEG and no other headache diagnosis within 2 years before EEG
+*/
+
+%let vars_eeg = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				eeg eeg_headache_dx last_eeg_headache_dx last_epilepsy_dx;
+
+%macro prep_eeg();
+
+data output.eeg_sensitive(keep=&vars_eeg);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=eeg;
+if eeg_headache_dx=1;	
+run;
+
+data output.eeg_specific;
+set output.eeg_sensitive;
+if (last_eeg_headache_dx=. or clm_dt-last_eeg_headache_dx >730) and
+	(last_epilepsy_dx=. or clm_dt-last_epilepsy_dx > 365);
+run;
+
+%patient_level_output(output.eeg_sensitive, output.eeg_sensitive_patient);
+%patient_level_output(output.eeg_specific, output.eeg_specific_patient);
+
+%mend prep_eeg;
+
+
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -494,5 +527,6 @@ quit;
 /*14*/%prep_mfct();
 /*15*/%prep_headimg();	
 /*16*/%prep_headimg2();	
+/*17*/%prep_eeg();	
 
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
