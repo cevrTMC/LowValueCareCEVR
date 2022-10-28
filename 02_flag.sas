@@ -62,6 +62,7 @@
 %let eeg_cond = cptcode in ('95812', '95813', '95816', '95819', '95822', '95827', '95830', '95957');
 %let carotid_cond = (cptcode in ('70498', '93880', '93882', '3100F'))  
 					 or ('70547'<=:cptcode<=:'70549');
+%let radiographic_cond = cptcode in ('73620', '73630', '73650', '73718', '73719', '73720', '76880', '76881', '76882');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -183,6 +184,8 @@
 %let neurologic_dx_cond = dxcode in :('G45', 'G460', 'G461', 'G462', 'G973', 'H34', 'H3582', 'I60', 
 									'I61', 'I63', 'I66', 'I6784', 'I6789', 'I9781', 'I9782', 'R20', 
 									'R25', 'R26', 'R27', 'R29', 'R414', 'R43', 'R47', 'R683', 'Z8673');
+%let plantarfasciitis_dx_cond = dxcode in :('M722', 'M729');
+%let footpain_dx_cond = dxcode in :('M2557', 'M7967');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -213,6 +216,9 @@
 				  eeg eeg_headache_dx epilepsy_dx
 			  	  carotid stroke_etc_dx
 				  neurologic_dx
+				  radiographic
+				  plantarfasciitis_dx
+				  footpain_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -249,6 +255,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &headimg_cond then headimg=1;
 			if &eeg_cond then eeg =1;
 			if &carotid_cond then carotid=1;
+			if &radiographic_cond then radiographic=1;
 	  end;
 	end;
 
@@ -284,6 +291,8 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &epilepsy_dx_cond then epilepsy_dx=1;
 			if &stroke_etc_dx_cond then stroke_etc_dx=1;
 			if &neurologic_dx_cond then neurologic_dx=1;
+			if &plantarfasciitis_dx_cond then plantarfasciitis_dx=1;
+			if &footpain_dx_cond then footpain_dx=1;
 	  end;
 	end;
 	
@@ -445,6 +454,9 @@ run;
 	 carotid = "HCPCS: carotid imaging "
 	 stroke_etc_dx="ICD-10: stroke/TIA, retinal vascular occlusion/ischemia, or nervous and musculoskeletal symptoms, asoociated with carotic LVC labeling"
 	 neurologic_dx="ICD-10:Other neurologic symptoms: stroke or TIA, history of stroke or TIA, retinal vascular occlusion or ischemia, or nervous or musculoskeletal symptoms"
+	 radiographic = "HCPCS: radiographic imaging: foot radiograph, foot MRI, or extemity ultrasound"
+	 plantarfasciitis_dx = "ICD-10: Plantar faciitis"
+	 footpain_dx = "ICD-10: foot pain"
 	;
 	drop betos;
 	run;

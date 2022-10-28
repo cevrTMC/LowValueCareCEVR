@@ -56,8 +56,9 @@ run;
 					eeg_headache_dx
 					epilepsy_dx
 					neurologic_dx
-					syncope_dx;
-%Let Dim_Var = 23;
+					syncope_dx
+					footpain_dx;
+%Let Dim_Var = 24;
 
 %macro FindFirstDxDate();
 *** Sort claims by ID and date of claim;
