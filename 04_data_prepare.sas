@@ -504,6 +504,33 @@ run;
 
 %mend prep_eeg;
 
+/*
+Algorithm 18: carotid (carotid imaging)
+
+Do not perform carotid imaging not associated with inpatient or emergency care for patients without a stroke, TIA, or focal neurological symptom in claim
+
+Denominator: NONE ?? Should we check history or just time in the same claim??
+*/
+
+%let vars_carotid = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				carotid emergencycare stroke_etc_dx;
+
+%macro prep_carotid();
+
+data output.carotid_sensitive(keep=&vars_carotid);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc=carotid and (src ne 'IP') and emergencycare=0;
+run;
+
+data output.carotid_specific;
+set output.carotid_sensitive;
+if stroke_etc_dx=0;
+run;
+
+%patient_level_output(output.carotid_sensitive, output.carotid_sensitive_patient);
+%patient_level_output(output.carotid_specific, output.carotid_specific_patient);
+
+%mend prep_carotid;
 
 
 
@@ -528,5 +555,6 @@ quit;
 /*15*/%prep_headimg();	
 /*16*/%prep_headimg2();	
 /*17*/%prep_eeg();	
+/*18*/%prep_carotid();	
 
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
