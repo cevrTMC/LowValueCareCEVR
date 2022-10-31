@@ -565,22 +565,22 @@ run;
 
 
 /*
-Algorithm 20: radio (radiographic or MR imaging)
+algorithm 20: radio (radiographic or MR imaging)
 
 Do not perform radiographic or MR imaging with diagnosis of plantar faciitis occuring within 2 weeks of initial foot pain diagnosis
 
-Denominator: Patients with reported foot pain and with plantar faciitis diagnosis within two weeks of initial foot pain 
+Denominator: Patients with reported foot pain and with plantar fasciitis diagnosis within four weeks of initial foot pain
 */
 
 %let vars_radio = desy_sort_key npi src bene_race_cd clm_dt lvc 
-				radiographic plantarfasciitis_dx last_footpain_dx ;
+				radiographic next_plantarfasciitis_dx last_footpain_dx ;
 %macro prep_radio();
 
 data output.radio_sensitive(keep=&vars_radio);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
 lvc = radiographic;
 
-if plantarfasciitis_dx=1 and 
+if (next_plantarfasciitis_dx>. and next_plantarfasciitis_dx-clm_dt<=14) and
    (last_footpain_dx>. and clm_dt- last_footpain_dx <=14);
 run;
 
@@ -588,7 +588,6 @@ run;
 %patient_level_output(output.radio_sensitive, output.radio_sensitive_patient);
 
 %mend prep_radio;
-
 
 
 proc datasets library=output kill;

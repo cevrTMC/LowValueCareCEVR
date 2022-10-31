@@ -92,8 +92,8 @@ run;
 
 %mend FindFirstDxDate;
 
-%let next_conditions low_risk_noncard;
-%Let Dim_nextVar = 1;
+%let next_conditions low_risk_noncard plantarfasciitis_dx;
+%Let Dim_nextVar = 2;
 
 %macro nextDxDate(input);
 *** Sort claims by ID and date of claim;
