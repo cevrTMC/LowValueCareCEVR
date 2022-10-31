@@ -533,6 +533,38 @@ run;
 %mend prep_carotid;
 
 /*
+Algorithm 19: carotidsyn (imaging of the carotid arteries for simply syncope) 
+
+Do not perform imaging of the carotid arteries for simply syncope without other neurologic symptoms
+
+Denominator: Patients with syncope and without other neurologic symptoms and no previous syncope diagnosis within 2 years before imaging
+Other neurologic symptoms: without stroke or TIA, history of stroke or TIA, retinal vascular occlusion or ischemia, or nervous or musculoskeletal symptoms
+
+*/
+
+%let vars_carotidsyn = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				carotid syncope_dx last_syncope_dx prev_syncope_dx first_neurologic_dx;
+
+%macro prep_carotidsyn();
+
+data output.carotidsyn_sensitive(keep=&vars_carotidsyn);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = carotid;
+if last_syncope_dx>. and clm_dt-last_syncope_dx<=14;
+run;
+
+data output.carotidsyn_specific;
+set output.carotidsyn_sensitive;
+if first_neurologic_dx=.; 
+run;
+
+%patient_level_output(output.carotidsyn_sensitive, output.carotidsyn_sensitive_patient);
+%patient_level_output(output.carotidsyn_specific, output.carotidsyn_specific_patient);
+
+%mend prep_carotidsyn;
+
+
+/*
 Algorithm 20: radio (radiographic or MR imaging)
 
 Do not perform radiographic or MR imaging with diagnosis of plantar faciitis occuring within 2 weeks of initial foot pain diagnosis
@@ -581,5 +613,6 @@ quit;
 /*16*/%prep_headimg2();	
 /*17*/%prep_eeg();	
 /*18*/%prep_carotid();	
+/*19*/%prep_carotidsyn();	
 /*20*/%prep_radio();	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
