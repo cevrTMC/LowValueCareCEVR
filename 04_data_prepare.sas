@@ -590,6 +590,30 @@ run;
 %mend prep_radio;
 
 
+/*
+algorithm 21. stress (stress testing, cardiac MRI, CT angiography)
+
+Do not perform stress testing not associated with inpatient or emergency care for patients with an established diagnosis of acute myocardial infraction
+
+Denominator: Patients with ischemic heart disease or acute myocardial infarction diagnosis at least 6 months before testing
+*/
+
+%let vars_stress = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				stress emergencycare last_ischemic_dx;
+
+%macro prep_stress();
+
+data output.stress_sensitive(keep=&vars_stress);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = stress and (emergencycare=0 and src ne "IP");
+if last_ischemic_dx>. and (clm_dt - last_ischemic_dx)>=90;
+run;
+
+%patient_level_output(output.stress_sensitive, output.stress_sensitive_patient);
+
+%mend prep_stress;
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -613,5 +637,7 @@ quit;
 /*17*/%prep_eeg();	
 /*18*/%prep_carotid();	
 /*19*/%prep_carotidsyn();	
-/*20*/%prep_radio();	
+/*20*/%prep_radio();
+/*21*/%prep_stress();	
+	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/

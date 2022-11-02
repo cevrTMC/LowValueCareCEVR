@@ -63,6 +63,14 @@
 %let carotid_cond = (cptcode in ('70498', '93880', '93882', '3100F'))  
 					 or ('70547'<=:cptcode<=:'70549');
 %let radiographic_cond = cptcode in ('73620', '73630', '73650', '73718', '73719', '73720', '76880', '76881', '76882');
+%let stress_cond = (cptcode in ('75574', '78460', '78461', '78464', '78465', '78472', 
+							'78473', '78481', '78483', '78491', '78492', '93350', '93351'))
+					or ('78451'<=:cptcode<=:'78454')
+					or ('93015'<=:cptcode<=:'93018');
+%let endarterectomy_cond = cptcode in ('35301');
+%let homocysteine_cond = cptcode in ('83090');
+%let pth_cond = cptcode in ('83970');
+
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -186,6 +194,13 @@
 									'R25', 'R26', 'R27', 'R29', 'R414', 'R43', 'R47', 'R683', 'Z8673');
 %let plantarfasciitis_dx_cond = dxcode in :('M722', 'M729');
 %let footpain_dx_cond = dxcode in :('M2557', 'M7967');
+%let ischemic_dx_cond = dxcode in :('I21', 'I22', 'I248', 'I249', 'I25');
+%let stroketia_dx_cond = dxcode in :('G45', 'G460', 'G461', 'G462', 'G973', 'H34', 'H3582', 'I60', 'I61',
+								'I63', 'I66', 'I6784', 'I6789', 'I9781', 'I9782', 'R20', 'R25', 'R26', 
+								'R27', 'R29', 'R414', 'R43', 'R47', 'R683', 'Z8673');
+%let folate_dx_cond = dxcode in :('D51', 'D52', 'D649', 'D81818', 'D81819', 'E538', 'E539', 'E721');
+%let kidney_dx_cond = dxcode in :('I12', 'I13', 'N18');
+%let hypercalcemia_dx_cond = dxcode in :('E8352');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -219,6 +234,12 @@
 				  radiographic
 				  plantarfasciitis_dx
 				  footpain_dx
+				  stress ischemic_dx
+				  endarterectomy
+				  stroketia_dx
+				  homocysteine
+				  folate_dx
+				  pth kidney_dx hypercalcemia_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -256,6 +277,10 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &eeg_cond then eeg =1;
 			if &carotid_cond then carotid=1;
 			if &radiographic_cond then radiographic=1;
+			if &stress_cond then stress=1;
+			if &endarterectomy_cond then endarterectomy=1;
+			if &homocysteine_cond then homocysteine=1;
+			if &pth_cond then pth=1;
 	  end;
 	end;
 
@@ -293,6 +318,11 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &neurologic_dx_cond then neurologic_dx=1;
 			if &plantarfasciitis_dx_cond then plantarfasciitis_dx=1;
 			if &footpain_dx_cond then footpain_dx=1;
+			if &ischemic_dx_cond then ischemic_dx=1;
+			if &stroketia_dx_cond then stroketia_dx=1;
+			if &folate_dx_cond then folate_dx=1;
+			if &kidney_dx_cond then kidney_dx=1;
+			if &hypercalcemia_dx_cond then hypercalcemia_dx=1;
 	  end;
 	end;
 	
@@ -457,6 +487,15 @@ run;
 	 radiographic = "HCPCS: radiographic imaging: foot radiograph, foot MRI, or extemity ultrasound"
 	 plantarfasciitis_dx = "ICD-10: Plantar faciitis"
 	 footpain_dx = "ICD-10: foot pain"
+	 stree = "HCPCS: stress testing, cardiac MRI, CT angiography"
+	 ischemic_dx = "ICD: ischemic heart disease or acute myocardial infarction diagnosis" 
+	 endarterectomy ="HCPCS: carotid endarterectomy"
+	 stroketia_dx = "ICD: stroke or TIA, stroke or TIA, or focal neurological symptoms"
+	 homocysteine="HCPCS: homocysteine testing"
+	 folate_dx = "ICD:diagnosis of folate or B12 deficiencies"
+	 pth = "HCPCS: parathyroid hormone (PTH) measurement" 
+	 kidney_dx ="ICD: chronic kidney disease"
+	 hypercalcemia_dx = "ICD: hypercalcemia diagnosis"
 	;
 	drop betos;
 	run;

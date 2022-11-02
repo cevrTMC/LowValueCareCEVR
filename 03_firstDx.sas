@@ -57,8 +57,14 @@ run;
 					epilepsy_dx
 					neurologic_dx
 					syncope_dx
-					footpain_dx;
-%Let Dim_Var = 24;
+					footpain_dx
+					ischemic_dx
+					stroketia_dx
+					kidney_dx
+					hypercalcemia_dx
+					dialysis_betos
+					;
+%Let Dim_Var = 29;
 
 %macro FindFirstDxDate();
 *** Sort claims by ID and date of claim;
@@ -92,8 +98,10 @@ run;
 
 %mend FindFirstDxDate;
 
-%let next_conditions low_risk_noncard plantarfasciitis_dx;
-%Let Dim_nextVar = 2;
+%let next_conditions low_risk_noncard 
+					 plantarfasciitis_dx
+					 dialysis_betos;
+%Let Dim_nextVar = 3;
 
 %macro nextDxDate(input);
 *** Sort claims by ID and date of claim;
