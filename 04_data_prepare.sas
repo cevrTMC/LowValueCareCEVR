@@ -613,6 +613,33 @@ run;
 
 %mend prep_stress;
 
+/*
+algorithm 22: endarterectomy (carotid endarterectomy)
+
+Do not perform carotid endarterectomy (CEA), not associated with an ER visit, for patients without a history of stroke or TIA and without stroke, TIA, or focal neurological symptoms noted in claim
+
+Denominator: Patients without a history of stroke or TIA, stroke or TIA, or focal neurological symptoms
+*/
+
+%let vars_endarterectomy = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				endarterectomy first_stroketia_dx;
+
+%macro prep_endarterectomy();
+
+data output.endarterectomy_sensitive(keep=&vars_endarterectomy);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = endarterectomy;
+run;
+
+data output.endarterectomy_specific;
+set output.endarterectomy_sensitive;
+if first_stroketia_dx = . ;
+run;
+
+%patient_level_output(output.endarterectomy_sensitive, output.endarterectomy_sensitive_patient);
+%patient_level_output(output.endarterectomy_specific, output.endarterectomy_specific_patient);
+
+%mend prep_endarterectomy;
 
 proc datasets library=output kill;
 run;
@@ -639,5 +666,6 @@ quit;
 /*19*/%prep_carotidsyn();	
 /*20*/%prep_radio();
 /*21*/%prep_stress();	
+/*22*/%prep_endarterectomy();	
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
