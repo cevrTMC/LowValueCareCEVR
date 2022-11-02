@@ -72,6 +72,7 @@
 %let pth_cond = cptcode in ('83970');
 %let pci_cond = cptcode in ('92980','92982');
 %let angioplasty_cond = cptcode in ('35471','35450','37205','37207','75960','75966');
+%let ivc_cond = cptcode in ('37191', '37192', '75940');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -206,6 +207,8 @@
 %let angina_dx_cond = dxcode in :('I200', 'I21', 'I22', 'I23', 'I25110', 'I25700', 'I25710');
 %let atherosclerosis_dx_cond = dxcode in :('I150', 'I701');
 %let fibromuscular_dx_cond = dxcode in :('I773');
+%let thrombosis_dx_cond = dxcode in :('I26', 'Z86711', 'I8249', 'I8259');
+
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
 %let low_risk_noncard_betos_cond = betos in : ('P1','P3D', 'P4A', 'P4B', 'P4C', 'P5C', 'P5D', 
@@ -246,6 +249,7 @@
 				  pth kidney_dx hypercalcemia_dx
 				  pci stablecoronary_dx angina_dx
 				  angioplasty atherosclerosis_dx fibromuscular_dx
+				  ivc thrombosis_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -289,6 +293,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &pth_cond then pth=1;
 			if &pci_cond then pci=1;
 			if &angioplasty_cond then angioplasty=1;
+			if &ivc_cond then ivc=1;
 	  end;
 	end;
 
@@ -335,6 +340,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &angina_dx_cond then angina_dx=1;
 			if &atherosclerosis_dx_cond then atherosclerosis_dx=1;
 			if &fibromuscular_dx_cond then fibromuscular_dx=1;
+			if &thrombosis_dx_cond then thrombosis_dx=1;
 	  end;
 	end;
 	
@@ -514,6 +520,8 @@ run;
 	 angioplasty = "HCPCS:renal/visceral angioplasty or stent placement"
 	 atherosclerosis_dx = "ICD: renal atherosclerosis or renovascular hypertension"
 	 fibromuscular_dx="ICD:fibromuscular dysplasia"
+	 ivc = "HCPCS:inferior vena cava (IVC) placement"
+	 thrombosis_dx = "ICD: pulmonary embolism or deep vein thrombosis "
 	;
 	drop betos;
 	run;

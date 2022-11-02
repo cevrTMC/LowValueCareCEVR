@@ -1,7 +1,7 @@
-﻿/*
-libname lvc_src 'C:\Users\lliang1\Documents\My SAS Files\9.4\lvc';
-libname lvc_etl 'C:\Users\lliang1\Documents\My SAS Files\9.4\lvc_etl';
-libname ccw 'C:\Users\lliang1\Documents\My SAS Files\9.4\ccw'; 
+/*
+
+Extract first, last, next service/Dx dates
+
 */
 %let outdir= C:\Users\lliang1\Documents\My SAS Files\9.4\output;
 
@@ -64,9 +64,10 @@ run;
 					hypercalcemia_dx
 					dialysis_betos
 					stablecoronary_dx
-					angina_dx
+					angina_dx 
+					thrombosis_dx 
 					;
-%Let Dim_Var = 31;
+%Let Dim_Var = 32;
 
 %macro FindFirstDxDate();
 *** Sort claims by ID and date of claim;

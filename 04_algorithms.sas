@@ -1,5 +1,5 @@
-ï»¿/*
-prepare analytic data for each of 23 Low-value care service analyses
+/*
+Low value care algorithms 
 */
 
 
@@ -13,7 +13,7 @@ Denominator: Men age 70 or older without prostate cancer, elevated PSA, or famil
 
 %let vars_psa= desy_sort_key npi src bene_race_cd clm_dt DOB_DT GNDR_CD psa first_prostate_dx lvc; 
 
-%macro prep_psa();
+%macro alg_psa();
 /* male, age >=70 */
 data output.psa_sensitive(keep=&vars_psa);
 set lvc_etl.claims_all_flag_firstDx;
@@ -29,7 +29,7 @@ run;
 
 %patient_level_output(output.psa_sensitive, output.psa_sensitive_patient);
 %patient_level_output(output.psa_specific, output.psa_specific_patient);
-%mend prep_psa;
+%mend alg_psa;
 
 /********************************************************
 algorithm 2. cerv (Cervical cancer screening)
@@ -43,7 +43,7 @@ diethylstilbestrol exposure, HIV/AIDS
 
 %let vars_cerv= desy_sort_key npi src bene_race_cd clm_dt DOB_DT GNDR_CD cerv first_cerv_ex lvc; 
 
-%macro prep_cerv();
+%macro alg_cerv();
 /*age 65+ , women*/
 data output.cerv_sensitive(keep=&vars_cerv);
 set lvc_etl.claims_all_flag_firstDx;
@@ -75,7 +75,7 @@ High risk indicators: chronic kidney disease, hypercalcemia, chronic conditions,
 %let vars_vd desy_sort_key npi src bene_race_cd clm_dt vitaminD_cpt first_chronic_dx last_other_risk_dx 
 	pregnancy_obesity_dx_date last_fracture_vd lvc;
 
-%macro prep_vd();
+%macro alg_vd();
 data output.vd_sensitive(keep=&vars_vd);
 set lvc_etl.claims_all_flag_firstdx;
 lvc = vitaminD_cpt;
@@ -95,7 +95,7 @@ run;
 
 %patient_level_output(output.vd_sensitive, output.vd_sensitive_patient);
 %patient_level_output(output.vd_specific, output.vd_specific_patient);
-%mend prep_vd;
+%mend alg_vd;
 
 
 /**************************************************
@@ -109,7 +109,7 @@ Known Possible Causes: cancer, external injury, trauma, IV drug abuse, neurologi
 
 %let vars_lbp desy_sort_key npi src bene_race_cd clm_dt imglbp last_imglbp_inc_dx last_imglbp_exc_dx lvc;
 
-%macro prep_lbp();
+%macro alg_lbp();
 /*imglbp_inclusion_dx Within 6 weeks before service*/
 data output.imglbp_sensitive(keep=&vars_lbp);
 set lvc_etl.claims_all_flag_firstdx;
@@ -125,7 +125,7 @@ run;
 
 %patient_level_output(output.imglbp_sensitive, output.imglbp_sensitive_patient);
 %patient_level_output(output.imglbp_specific, output.imglbp_specific_patient);
-%mend prep_lbp;
+%mend alg_lbp;
 
 /**************************************************
 algorithm 5: crc (colorectal cancer screening)
@@ -137,7 +137,7 @@ Denominator: Patients age 85 or older without a history of colorectal cancer
 
 %let vars_crc desy_sort_key npi src bene_race_cd DOB_DT clm_dt crc crc_dx first_crc_cancer_dx lvc;
 
-%macro prep_crc();
+%macro alg_crc();
 /* age >=85 */
 data output.crc_sensitive(keep=&vars_crc);
 set lvc_etl.claims_all_flag_firstDx;
@@ -153,12 +153,12 @@ run;
 
 %patient_level_output(output.crc_sensitive, output.crc_sensitive_patient);
 %patient_level_output(output.crc_specific, output.crc_specific_patient);
-%mend prep_crc;
+%mend alg_crc;
 
 /**************************************************
 algorithm 6: canscrn (cancer screening)
 
-Donâ€™t perform routine cancer screening for dialysis patients with limited life expectancy 
+Don’t perform routine cancer screening for dialysis patients with limited life expectancy 
 
 Denominator: Patients age 75 years or older and on dialysis
 */
@@ -166,7 +166,7 @@ Denominator: Patients age 75 years or older and on dialysis
 %let vars_canscrn desy_sort_key npi src bene_race_cd DOB_DT clm_dt 
 	canscrn canscrn_dx first_dialysis lvc;
 
-%macro prep_canscrn();
+%macro alg_canscrn();
 
 /*age 75+ and on dialysis*/ 
 data output.canscrn_sensitive(keep=&vars_canscrn);
@@ -176,20 +176,20 @@ if DOB_DT>=4 and (first_dialysis>. and clm_dt>=first_dialysis);
 run;
 
 %patient_level_output(output.canscrn_sensitive, output.canscrn_sensitive_patient);
-%mend prep_canscrn;
+%mend alg_canscrn;
 
 
 /**************************************************
 algorithm 7: bonemd (bone mineral density testing)
 
-Donâ€™t perform bone mineral density testing within 2 years of a prior bone mineral density test for patients with osteoporosis
+Don’t perform bone mineral density testing within 2 years of a prior bone mineral density test for patients with osteoporosis
 
 Denominator: Patients with osteoporosis and without cancer or a fragility fracture
 */
 
 %let vars_bonemd desy_sort_key npi src bene_race_cd clm_dt lvc bonemd prev_bonemd first_osteoporosis_dx first_cancer_dx last_fracture;
 
-%macro prep_bonemd();
+%macro alg_bonemd();
 
 data output.bonemd_sensitive(keep=&vars_bonemd);
 set lvc_etl.claims_all_flag_firstdx;
@@ -207,19 +207,19 @@ run;
 
 %patient_level_output(output.bonemd_sensitive, output.bonemd_sensitive_patient);
 %patient_level_output(output.bonemd_specific, output.bonemd_specific_patient);
-%mend prep_bonemd;
+%mend alg_bonemd;
 
 /**************************************************
 algorithm 8: hypercoagula (hypercoagulability test)
 
-Donâ€™t perform  hypercoagulability test in patients with deep vein thrombosis (DVT) with a known cause
+Don’t perform  hypercoagulability test in patients with deep vein thrombosis (DVT) with a known cause
 denominator: Patients with pulmonary embolism or venous embolism with thrombosis
 
 */
 
 %let vars_hypercoagula desy_sort_key npi src bene_race_cd clm_dt hypercoagula first_embolism_dx last_embolism_dx lvc;
 
-%macro prep_hypercoagula();
+%macro alg_hypercoagula();
 data output.hypercoagula_sensitive(keep=&vars_hypercoagula);
 set lvc_etl.claims_all_flag_firstDx;
 lvc=0;
@@ -228,12 +228,12 @@ if first_embolism_dx>.; /*Patients with pulmonary embolism  */
 run;
 
 %patient_level_output(output.hypercoagula_sensitive, output.hypercoagula_sensitive_patient);
-%mend prep_hypercoagula;
+%mend alg_hypercoagula;
 
 /**************************************************
 algorithm 9: t3 (T3 level)
 
-Donâ€™t perform a total or free T3 level when assessing levothyroxine (T4) dose in 
+Don’t perform a total or free T3 level when assessing levothyroxine (T4) dose in 
 hypothyroid patients
 
 denominator: Patients with hypothyroidism
@@ -241,7 +241,7 @@ denominator: Patients with hypothyroidism
 
 %let vars_t3 desy_sort_key npi src t3 bene_race_cd clm_dt first_hypothyroidism_dx last_hypothyroidism_dx lvc;
 
-%macro prep_t3();
+%macro alg_t3();
 data output.t3_sensitive(keep=&vars_t3);
 set lvc_etl.claims_all_flag_firstDx;
 lvc=0;
@@ -250,7 +250,7 @@ if first_hypothyroidism_dx>.; /*Patients with hypothyroidism */
 run;
 
 %patient_level_output(output.t3_sensitive, output.t3_sensitive_patient);
-%mend prep_t3;
+%mend alg_t3;
 
 
 /**************************************************
@@ -265,7 +265,7 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 %let vars_xray desy_sort_key npi src bene_race_cd clm_dt lvc xray emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
-%macro prep_xray();
+%macro alg_xray();
 
 data output.xray_sensitive(keep=&vars_xray);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -283,7 +283,7 @@ run;
 %patient_level_output(output.xray_sensitive, output.xray_sensitive_patient);
 %patient_level_output(output.xray_specific, output.xray_specific_patient);
 
-%mend prep_xray;
+%mend alg_xray;
 
 
 /**************************************************
@@ -297,7 +297,7 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 %let vars_echo desy_sort_key npi src bene_race_cd clm_dt lvc echocardiogram emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
-%macro prep_echo();
+%macro alg_echo();
 
 data output.echo_sensitive(keep=&vars_echo);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -315,7 +315,7 @@ run;
 %patient_level_output(output.echo_sensitive, output.echo_sensitive_patient);
 %patient_level_output(output.echo_specific, output.echo_specific_patient);
 
-%mend prep_echo;
+%mend alg_echo;
 
 
 /**************************************************
@@ -329,7 +329,7 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 %let vars_pft desy_sort_key npi src bene_race_cd clm_dt lvc pulmonary emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
-%macro prep_pft();
+%macro alg_pft();
 data output.pft_sensitive(keep=&vars_pft);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
 lvc=0;
@@ -346,7 +346,7 @@ run;
 %patient_level_output(output.pft_sensitive, output.pft_sensitive_patient);
 %patient_level_output(output.pft_specific, output.pft_specific_patient);
 
-%mend prep_pft;
+%mend alg_pft;
 
 /**************************************************
 algorithm 13: eenc (Electrocardiogram, Echocardiogram, Nuclear medicine imaging, Cardiac MRI or CT )
@@ -359,7 +359,7 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 %let vars_eenc desy_sort_key npi src bene_race_cd clm_dt lvc eenc emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
-%macro prep_eenc();
+%macro alg_eenc();
 
 data output.eenc_sensitive(keep=&vars_eenc);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -376,7 +376,7 @@ run;
 
 %patient_level_output(output.eenc_sensitive, output.eenc_sensitive_patient);
 %patient_level_output(output.eenc_specific, output.eenc_specific_patient);
-%mend prep_eenc;
+%mend alg_eenc;
 
 
 /*
@@ -391,7 +391,7 @@ Other related complications: complications of sinusitis, immune deficiencies, na
 %let vars_mfct=desy_sort_key npi src bene_race_cd clm_dt lvc maxillofacialCT sinusitis_dx 
 			   other_related_comp_dx last_sinusitis_dx;
 
-%macro prep_mfct();
+%macro alg_mfct();
 
 data output.mfct_sensitive(keep=&vars_mfct);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -410,7 +410,7 @@ run;
 %patient_level_output(output.mfct_sensitive, output.mfct_sensitive_patient);
 %patient_level_output(output.mfct_specific, output.mfct_specific_patient);
 
-%mend prep_mfct;
+%mend alg_mfct;
 
 
 /*
@@ -425,7 +425,7 @@ Diagnoses for warranted imaging: epilepsy or convulsions, cerebrovacular disease
 %let vars_headimg = desy_sort_key npi src bene_race_cd clm_dt lvc 
 					headimg syncope_dx warranted_img_dx;
 
-%macro prep_headimg();
+%macro alg_headimg();
 
 data output.headimg_sensitive(keep=&vars_headimg);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -441,7 +441,7 @@ run;
 %patient_level_output(output.headimg_sensitive, output.headimg_sensitive_patient);
 %patient_level_output(output.headimg_specific, output.headimg_specific_patient);
 
-%mend prep_headimg;
+%mend alg_headimg;
 
 
 /*
@@ -455,7 +455,7 @@ Patients with headache and no other diagnosis for warranted imaging. Diagnoses f
 %let vars_headimg2 = desy_sort_key npi src bene_race_cd clm_dt lvc 
 					headimg headache_dx warranted_img2_dx;
 
-%macro prep_headimg2();
+%macro alg_headimg2();
 
 data output.headimg2_sensitive(keep=&vars_headimg2);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -471,7 +471,7 @@ run;
 %patient_level_output(output.headimg2_sensitive, output.headimg2_sensitive_patient);
 %patient_level_output(output.headimg2_specific, output.headimg2_specific_patient);
 
-%mend prep_headimg2;
+%mend alg_headimg2;
 
 
 /*
@@ -485,7 +485,7 @@ Denominator:Patients with headaches and no indication of epilepsy or convulsions
 %let vars_eeg = desy_sort_key npi src bene_race_cd clm_dt lvc 
 				eeg eeg_headache_dx last_eeg_headache_dx last_epilepsy_dx;
 
-%macro prep_eeg();
+%macro alg_eeg();
 
 data output.eeg_sensitive(keep=&vars_eeg);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -502,7 +502,7 @@ run;
 %patient_level_output(output.eeg_sensitive, output.eeg_sensitive_patient);
 %patient_level_output(output.eeg_specific, output.eeg_specific_patient);
 
-%mend prep_eeg;
+%mend alg_eeg;
 
 /*
 Algorithm 18: carotid (carotid imaging)
@@ -515,7 +515,7 @@ Denominator: NONE ?? Should we check history or just time in the same claim??
 %let vars_carotid = desy_sort_key npi src bene_race_cd clm_dt lvc 
 				carotid emergencycare stroke_etc_dx;
 
-%macro prep_carotid();
+%macro alg_carotid();
 
 data output.carotid_sensitive(keep=&vars_carotid);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -530,7 +530,7 @@ run;
 %patient_level_output(output.carotid_sensitive, output.carotid_sensitive_patient);
 %patient_level_output(output.carotid_specific, output.carotid_specific_patient);
 
-%mend prep_carotid;
+%mend alg_carotid;
 
 /*
 Algorithm 19: carotidsyn (imaging of the carotid arteries for simply syncope) 
@@ -545,7 +545,7 @@ Other neurologic symptoms: without stroke or TIA, history of stroke or TIA, reti
 %let vars_carotidsyn = desy_sort_key npi src bene_race_cd clm_dt lvc 
 				carotid syncope_dx last_syncope_dx prev_syncope_dx first_neurologic_dx;
 
-%macro prep_carotidsyn();
+%macro alg_carotidsyn();
 
 data output.carotidsyn_sensitive(keep=&vars_carotidsyn);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -561,7 +561,7 @@ run;
 %patient_level_output(output.carotidsyn_sensitive, output.carotidsyn_sensitive_patient);
 %patient_level_output(output.carotidsyn_specific, output.carotidsyn_specific_patient);
 
-%mend prep_carotidsyn;
+%mend alg_carotidsyn;
 
 
 /*
@@ -574,7 +574,7 @@ Denominator: Patients with reported foot pain and with plantar fasciitis diagnos
 
 %let vars_radio = desy_sort_key npi src bene_race_cd clm_dt lvc 
 				radiographic next_plantarfasciitis_dx last_footpain_dx ;
-%macro prep_radio();
+%macro alg_radio();
 
 data output.radio_sensitive(keep=&vars_radio);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -587,7 +587,7 @@ run;
 
 %patient_level_output(output.radio_sensitive, output.radio_sensitive_patient);
 
-%mend prep_radio;
+%mend alg_radio;
 
 
 /*
@@ -601,7 +601,7 @@ Denominator: Patients with ischemic heart disease or acute myocardial infarction
 %let vars_stress = desy_sort_key npi src bene_race_cd clm_dt lvc 
 				stress emergencycare last_ischemic_dx;
 
-%macro prep_stress();
+%macro alg_stress();
 
 data output.stress_sensitive(keep=&vars_stress);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -611,7 +611,7 @@ run;
 
 %patient_level_output(output.stress_sensitive, output.stress_sensitive_patient);
 
-%mend prep_stress;
+%mend alg_stress;
 
 /*
 algorithm 22: endarterectomy (carotid endarterectomy)
@@ -624,7 +624,7 @@ Denominator: Patients without a history of stroke or TIA, stroke or TIA, or foca
 %let vars_endarterectomy = desy_sort_key npi src bene_race_cd clm_dt lvc 
 				endarterectomy first_stroketia_dx;
 
-%macro prep_endarterectomy();
+%macro alg_endarterectomy();
 
 data output.endarterectomy_sensitive(keep=&vars_endarterectomy);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -639,7 +639,7 @@ run;
 %patient_level_output(output.endarterectomy_sensitive, output.endarterectomy_sensitive_patient);
 %patient_level_output(output.endarterectomy_specific, output.endarterectomy_specific_patient);
 
-%mend prep_endarterectomy;
+%mend alg_endarterectomy;
 
 /*
 algorithm 23: homocysteine ( homocysteine testing)
@@ -652,7 +652,7 @@ Denominator: Patients without a diagnosis of folate or B12 deficiencies
 %let vars_homocysteine = desy_sort_key npi src bene_race_cd clm_dt lvc 
 					homocysteine folate_dx;
 
-%macro prep_homocysteine();
+%macro alg_homocysteine();
 
 data output.homocysteine_sensitive(keep=&vars_homocysteine);
 set lvc_etl.claims_all_flag_firstdx_nextdx;
@@ -667,35 +667,68 @@ run;
 %patient_level_output(output.homocysteine_sensitive, output.homocysteine_sensitive_patient);
 %patient_level_output(output.homocysteine_specific, output.homocysteine_specific_patient);
 
-%mend prep_homocysteine;
+%mend alg_homocysteine;
+
+
+/*
+algorithm 24. pth (parathyroid hormone (PTH) measurement)
+
+Do not perform parathyroid hormone (PTH) measurement for patients with chronic kidney disease and no dialysis services before PTH testing or within 30 days following testing, as well as no hypercalcemia diagnosis during the year
+
+Denominator: Patients with chronic kidney disease and not on dialysis and no hypercalcemia diagnosis
+*/
+
+%let vars_pth = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				pth first_kidney_dx last_hypercalcemia_dx first_dialysis_betos next_dialysis_betos;
+
+%macro alg_pth();
+
+data output.pth_sensitive(keep=&vars_pth);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = pth;
+if first_kidney_dx>.;
+run;
+
+data output.pth_specific;
+set output.pth_sensitive;
+if (not (last_hypercalcemia_dx>. and clm_dt-last_hypercalcemia_dx<=365)) and 
+   (not (first_dialysis_betos>. or (next_dialysis_betos>. and next_dialysis_betos-clm_dt<=30)));
+run;
+
+%patient_level_output(output.pth_sensitive, output.pth_sensitive_patient);
+%patient_level_output(output.pth_specific, output.pth_specific_patient);
+
+%mend alg_pth;
 
 
 proc datasets library=output kill;
 run;
 quit;
 
-/*1*/%prep_psa();
-/*2*/%prep_cerv(); 
-/*3*/%prep_vd();
-/*4*/%prep_lbp();
-/*5*/%prep_crc();
-/*6*/%prep_canscrn();
-/*7*/%prep_bonemd();
-/*8*/%prep_hypercoagula();
-/*9*/%prep_t3();
-/*10*/%prep_xray();
-/*11*/%prep_echo();
-/*12*/%prep_pft();
-/*13*/%prep_eenc();
-/*14*/%prep_mfct();
-/*15*/%prep_headimg();	
-/*16*/%prep_headimg2();	
-/*17*/%prep_eeg();	
-/*18*/%prep_carotid();	
-/*19*/%prep_carotidsyn();	
-/*20*/%prep_radio();
-/*21*/%prep_stress();	
-/*22*/%prep_endarterectomy();	
-/*23*/%prep_homocysteine();	
+/*1*/%alg_psa();
+/*2*/%alg_cerv(); 
+/*3*/%alg_vd();
+/*4*/%alg_lbp();
+/*5*/%alg_crc();
+/*6*/%alg_canscrn();
+/*7*/%alg_bonemd();
+/*8*/%alg_hypercoagula();
+/*9*/%alg_t3();
+/*10*/%alg_xray();
+/*11*/%alg_echo();
+/*12*/%alg_pft();
+/*13*/%alg_eenc();
+/*14*/%alg_mfct();
+/*15*/%alg_headimg();	
+/*16*/%alg_headimg2();	
+/*17*/%alg_eeg();	
+/*18*/%alg_carotid();	
+/*19*/%alg_carotidsyn();	
+/*20*/%alg_radio();
+/*21*/%alg_stress();	
+/*22*/%alg_endarterectomy();	
+/*23*/%alg_homocysteine();	
+/*24*/%alg_pth();	
+
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
