@@ -63,8 +63,10 @@ run;
 					kidney_dx
 					hypercalcemia_dx
 					dialysis_betos
+					stablecoronary_dx
+					angina_dx
 					;
-%Let Dim_Var = 29;
+%Let Dim_Var = 31;
 
 %macro FindFirstDxDate();
 *** Sort claims by ID and date of claim;

@@ -70,7 +70,8 @@
 %let endarterectomy_cond = cptcode in ('35301');
 %let homocysteine_cond = cptcode in ('83090');
 %let pth_cond = cptcode in ('83970');
-
+%let pci_cond = cptcode in ('92980','92982');
+%let angioplasty_cond = cptcode in ('35471','35450','37205','37207','75960','75966');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -201,7 +202,10 @@
 %let folate_dx_cond = dxcode in :('D51', 'D52', 'D649', 'D81818', 'D81819', 'E538', 'E539', 'E721');
 %let kidney_dx_cond = dxcode in :('I12', 'I13', 'N18');
 %let hypercalcemia_dx_cond = dxcode in :('E8352');
-
+%let stablecoronary_dx_cond = dxcode in :('I248', 'I249', 'I25', 'I21', 'I22', 'I23');
+%let angina_dx_cond = dxcode in :('I200', 'I21', 'I22', 'I23', 'I25110', 'I25700', 'I25710');
+%let atherosclerosis_dx_cond = dxcode in :('I150', 'I701');
+%let fibromuscular_dx_cond = dxcode in :('I773');
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
 %let low_risk_noncard_betos_cond = betos in : ('P1','P3D', 'P4A', 'P4B', 'P4C', 'P5C', 'P5D', 
@@ -240,6 +244,8 @@
 				  homocysteine
 				  folate_dx
 				  pth kidney_dx hypercalcemia_dx
+				  pci stablecoronary_dx angina_dx
+				  angioplasty atherosclerosis_dx fibromuscular_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -281,6 +287,8 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &endarterectomy_cond then endarterectomy=1;
 			if &homocysteine_cond then homocysteine=1;
 			if &pth_cond then pth=1;
+			if &pci_cond then pci=1;
+			if &angioplasty_cond then angioplasty=1;
 	  end;
 	end;
 
@@ -323,6 +331,10 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &folate_dx_cond then folate_dx=1;
 			if &kidney_dx_cond then kidney_dx=1;
 			if &hypercalcemia_dx_cond then hypercalcemia_dx=1;
+			if &stablecoronary_dx_cond then stablecoronary_dx=1;
+			if &angina_dx_cond then angina_dx=1;
+			if &atherosclerosis_dx_cond then atherosclerosis_dx=1;
+			if &fibromuscular_dx_cond then fibromuscular_dx=1;
 	  end;
 	end;
 	
@@ -496,6 +508,12 @@ run;
 	 pth = "HCPCS: parathyroid hormone (PTH) measurement" 
 	 kidney_dx ="ICD: chronic kidney disease"
 	 hypercalcemia_dx = "ICD: hypercalcemia diagnosis"
+	 pci= "HCPCS: percutaneous coronary intervention (PCI) "
+	 stablecoronary_dx = "ICD:stable coronary disease (defined as ischemic heart disease or acute myocardial infarction " 
+	 angina_dx = "ICD:unstable angina or myocardial infarction"
+	 angioplasty = "HCPCS:renal/visceral angioplasty or stent placement"
+	 atherosclerosis_dx = "ICD: renal atherosclerosis or renovascular hypertension"
+	 fibromuscular_dx="ICD:fibromuscular dysplasia"
 	;
 	drop betos;
 	run;

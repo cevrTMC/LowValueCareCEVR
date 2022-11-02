@@ -641,6 +641,35 @@ run;
 
 %mend prep_endarterectomy;
 
+/*
+algorithm 23: homocysteine ( homocysteine testing)
+
+Do not perform homocysteine testing with no diagnoses of folate or B12 deficiencies in the claim
+
+Denominator: Patients without a diagnosis of folate or B12 deficiencies
+*/
+
+%let vars_homocysteine = desy_sort_key npi src bene_race_cd clm_dt lvc 
+					homocysteine folate_dx;
+
+%macro prep_homocysteine();
+
+data output.homocysteine_sensitive(keep=&vars_homocysteine);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = homocysteine;
+run;
+
+data output.homocysteine_specific;
+set output.homocysteine_sensitive;
+if folate_dx=0;
+run;
+
+%patient_level_output(output.homocysteine_sensitive, output.homocysteine_sensitive_patient);
+%patient_level_output(output.homocysteine_specific, output.homocysteine_specific_patient);
+
+%mend prep_homocysteine;
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -667,5 +696,6 @@ quit;
 /*20*/%prep_radio();
 /*21*/%prep_stress();	
 /*22*/%prep_endarterectomy();	
+/*23*/%prep_homocysteine();	
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
