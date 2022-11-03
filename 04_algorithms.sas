@@ -700,6 +700,34 @@ run;
 
 %mend alg_pth;
 
+/*
+algorithm 25. pci (percutaneous coronary intervention (PCI))
+
+Do not perform percutaneous coronary intervention (PCI) with balloon angioplasty or stent placement, not associated with an ER visit, for patients with stable coronary disease  
+
+Denominator: Patients with stable coronary disease (defined as ischemic heart disease or acute myocardial infarction more than 6 months before PCI) and without unstable angina or myocardial infarction in two weeks before claim
+*/
+
+%let vars_pci = desy_sort_key npi src bene_race_cd clm_dt lvc 
+			pci last_stablecoronary_dx last_angina_dx;
+
+%macro alg_pci();
+
+data output.pci_sensitive(keep=&vars_pci);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = pci;
+if last_stablecoronary_dx>. and clm_dt-last_stablecoronary_dx>180;
+run;
+
+data output.pci_specific;
+set output.pci_sensitive;
+if not (last_angina_dx>. and clm_dt - last_angina_dx <=14);
+run;
+
+%patient_level_output(output.pci_sensitive, output.pci_sensitive_patient);
+%patient_level_output(output.pci_specific, output.pci_specific_patient);
+
+%mend alg_pci;
 
 proc datasets library=output kill;
 run;
@@ -729,6 +757,7 @@ quit;
 /*22*/%alg_endarterectomy();	
 /*23*/%alg_homocysteine();	
 /*24*/%alg_pth();	
+/*25*/%alg_pci();	
 
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
