@@ -73,6 +73,7 @@
 %let pci_cond = cptcode in ('92980','92982');
 %let angioplasty_cond = cptcode in ('35471','35450','37205','37207','75960','75966');
 %let ivc_cond = cptcode in ('37191', '37192', '75940');
+%let catheterization_cond = cptcode in ('93503');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -208,11 +209,35 @@
 %let atherosclerosis_dx_cond = dxcode in :('I150', 'I701');
 %let fibromuscular_dx_cond = dxcode in :('I773');
 %let thrombosis_dx_cond = dxcode in :('I26', 'Z86711', 'I8249', 'I8259');
+%let pulmonaryhypertension_dx_cond = dxcode in :('I27', 'I314');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
 %let low_risk_noncard_betos_cond = betos in : ('P1','P3D', 'P4A', 'P4B', 'P4C', 'P5C', 'P5D', 
 							'P8A', 'P8G');
+
+/* DRG conditions */
+%let surgical_drg_cond = (drg in :( '010','876')) or 
+						('001'<=:drg<=:'003') or
+						('005'<=:drg<=:'008') or
+						('020'<=:drg<=:'033') or
+						('037'<=:drg<=:'042') or
+						('113'<=:drg<=:'117') or
+						('129'<=:drg<=:'139') or
+						('163'<=:drg<=:'168') or
+						('215'<=:drg<=:'245') or
+						('252'<=:drg<=:'264') or
+						('326'<=:drg<=:'358') or
+						('405'<=:drg<=:'425') or
+						('453'<=:drg<=:'517') or
+						('820'<=:drg<=:'830') or
+						('853'<=:drg<=:'858') or
+						('901'<=:drg<=:'909') or
+						('927'<=:drg<=:'929') or
+						('939'<=:drg<=:'941') or
+						('955'<=:drg<=:'959') or
+						('969'<=:drg<=:'970') or
+						('981'<=:drg<=:'989');
 
 /********************************************************************************/
 /* flag conditions */
@@ -250,6 +275,8 @@
 				  pci stablecoronary_dx angina_dx
 				  angioplasty atherosclerosis_dx fibromuscular_dx
 				  ivc thrombosis_dx
+				  catheterization pulmonaryhypertension_dx
+				  surgical_drg
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -294,6 +321,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &pci_cond then pci=1;
 			if &angioplasty_cond then angioplasty=1;
 			if &ivc_cond then ivc=1;
+			if &catheterization_cond then catheterization=1;
 	  end;
 	end;
 
@@ -341,6 +369,7 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &atherosclerosis_dx_cond then atherosclerosis_dx=1;
 			if &fibromuscular_dx_cond then fibromuscular_dx=1;
 			if &thrombosis_dx_cond then thrombosis_dx=1;
+			if &pulmonaryhypertension_dx_cond then pulmonaryhypertension_dx=1;
 	  end;
 	end;
 	
@@ -354,6 +383,11 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 		  end;
 		end;
 	
+	%end;
+
+	%if &clmtype=ip %then %do;
+  		drg = upcase(clm_drg_cd);
+		if &surgical_drg_cond then surgical_drg=1;
 	%end;
 
 	dialysis = (dialysis_dx or dialysis_betos);
@@ -522,6 +556,9 @@ run;
 	 fibromuscular_dx="ICD:fibromuscular dysplasia"
 	 ivc = "HCPCS:inferior vena cava (IVC) placement"
 	 thrombosis_dx = "ICD: pulmonary embolism or deep vein thrombosis "
+	 catheterization = "HCPCS:pulmonary artery catheterization (Swan-Ganz replacement)"
+	 pulmonaryhypertension_dx = "ICD:pulmonary hypertension or cardiac tamponade"
+	 surgical_drg = "DRG: surgical MS-DRG "
 	;
 	drop betos;
 	run;

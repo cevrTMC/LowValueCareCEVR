@@ -729,6 +729,65 @@ run;
 
 %mend alg_pci;
 
+
+/*
+algorithm 26. angioplasty  (Patients that received a renal/visceral angioplasty or stent placement)
+
+Do not perform renal/visceral angioplasty or stent placement with a diagnosis of renal atherosclerosis or renovascular hypertension noted in procedure claim
+
+Denominator: Patients with a diagnosis of renal atherosclerosis or renovascular hypertension and without fibromuscular dysplasia
+*/
+
+%let vars_angioplasty = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				angioplasty atherosclerosis_dx fibromuscular_dx;
+
+%macro alg_angioplasty();
+
+data output.angioplasty_sensitive(keep=&vars_angioplasty);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = angioplasty;
+if atherosclerosis_dx=1;
+run;
+
+data output.angioplasty_specific;
+set output.angioplasty_sensitive;
+if fibromuscular_dx=0;
+run;
+
+%patient_level_output(output.angioplasty_sensitive, output.angioplasty_sensitive_patient);
+%patient_level_output(output.angioplasty_specific, output.angioplasty_specific_patient);
+
+%mend alg_angioplasty;
+
+/*
+algorithm 27. ivc (inferior vena cava (IVC) placement)
+
+Do not perform IVC filter placement in patients without pulmonary embolism or deep vein thrombosis
+
+Denominator: Patients without a history of or current pulmonary embolism or deep vein thrombosis in previous year
+*/
+
+
+%let vars_ivc = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				ivc last_thrombosis_dx;
+
+%macro alg_ivc();
+
+data output.ivc_sensitive(keep=&vars_ivc);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = ivc;
+run;
+
+data output.ivc_specific;
+set output.ivc_sensitive;
+if not (last_thrombosis_dx>. and clm_dt - last_thrombosis_dx <=365);
+run;
+
+%patient_level_output(output.ivc_sensitive, output.ivc_sensitive_patient);
+%patient_level_output(output.ivc_specific, output.ivc_specific_patient);
+
+%mend alg_ivc;
+
 proc datasets library=output kill;
 run;
 quit;
@@ -758,6 +817,8 @@ quit;
 /*23*/%alg_homocysteine();	
 /*24*/%alg_pth();	
 /*25*/%alg_pci();	
+/*26*/%alg_angioplasty();	
+/*27*/%alg_ivc();	
 
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/

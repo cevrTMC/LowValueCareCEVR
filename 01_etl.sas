@@ -10,7 +10,7 @@ quit;
 
 %macro etl_lds_ip(year=, chunk=);
 	%let ipvars = DESY_SORT_KEY claim_no clm_admsn_dt at_physn_npi bene_race_cd dob_dt gndr_cd
-	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25;
+	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25 CLM_DRG_CD;
 
 	/* SORT INPATIENT REVENUE CENTER FILE IN PREPARATION FOR TRANSFORMATION */
 	proc sort data=ccw.inp_revenuek_lds_&year._&chunk. out=ip&year._&chunk.line; 
@@ -79,7 +79,7 @@ quit;
 %macro etl_lds_op(year=, chunk=);
 	%let opvars = DESY_SORT_KEY claim_no clm_thru_dt at_physn_npi bene_race_cd dob_dt gndr_cd
 	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25;
-	/* SORT INPATIENT REVENUE CENTER FILE IN PREPARATION FOR TRANSFORMATION */
+	/* SORT OUTPATIENT REVENUE CENTER FILE IN PREPARATION FOR TRANSFORMATION */
 	proc sort data=ccw.out_revenuek_lds_&year._&chunk. out=op&year._&chunk.line; 
 		by DESY_SORT_KEY claim_no clm_line_num; 
 	run; 
@@ -144,9 +144,9 @@ quit;
 %mend etl_lds_op;
 
 %macro etl_lds_cr(year=, chunk=);
-	%let opvars = DESY_SORT_KEY claim_no clm_thru_dt rfr_physn_npi bene_race_cd dob_dt gndr_cd
+	%let crvars = DESY_SORT_KEY claim_no clm_thru_dt rfr_physn_npi bene_race_cd dob_dt gndr_cd
 	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25 betos_cd1-betos_cd200;
-	/* SORT INPATIENT REVENUE CENTER FILE IN PREPARATION FOR TRANSFORMATION */
+	/* SORT CARRIER REVENUE CENTER FILE IN PREPARATION FOR TRANSFORMATION */
 	proc sort data=ccw.car_linek_lds_&year._&chunk. out=car&year._&chunk.line; 
 		by DESY_SORT_KEY claim_no line_num; 
 	run; 
@@ -202,7 +202,7 @@ quit;
 		var DESY_SORT_KEY claim_no hcpcs_cd1 hcpcs_cd2 hcpcs_cd3 clm_thru_dt; 
 	run;
 
-	data lvc_etl.cr_&year._&chunk.(keep=&opvars);
+	data lvc_etl.cr_&year._&chunk.(keep=&crvars);
 	set lvc_etl.cr_&year._&chunk.;
 	run;
 	
