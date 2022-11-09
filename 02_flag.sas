@@ -74,6 +74,10 @@
 %let angioplasty_cond = cptcode in ('35471','35450','37205','37207','75960','75966');
 %let ivc_cond = cptcode in ('37191', '37192', '75940');
 %let catheterization_cond = cptcode in ('93503');
+%let verte_cond = cptcode in ('22520', '22521', '22523', '22524');
+%let knee_cond = cptcode in ('29877', '29879', '29880', '29881', 'G0289');
+%let inject_cond = cptcode in ('62311', '64483', '20552', '20553', '64493', '64475');
+%let etanercept_cond = cptcode in ('J1438');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -210,6 +214,20 @@
 %let fibromuscular_dx_cond = dxcode in :('I773');
 %let thrombosis_dx_cond = dxcode in :('I26', 'Z86711', 'I8249', 'I8259');
 %let pulmonaryhypertension_dx_cond = dxcode in :('I27', 'I314');
+%let vertebralfracture_dx_cond = dxcode in:('M485', 'M8008', 'M8088', 'M8448', 'M8458', 
+											'M8468', 'S220', 'S320');
+%let bonecancer_dx_cond = dxcode in :('C412', 'C795', 'C7B03', 'C900', 'D166', 'D1809', 'D47Z9', 'D480', 'D492');
+%let osteoarthritis_dx_cond = dxcode in :('M15', 'M17', 'M199', 'M224', 'M942'); 
+%let meniscaltear_dx_cond = dxcode in :('M232', 'S832', 'S833');
+%let lowbackpain_dx_cond = dxcode in :('M430', 'M431', 'M4327', 'M4328', 'M4646', 'M4647', 'M4720',
+										'M4726', 'M4727', 'M4728', 'M47816', 'M47817', 'M47818', 'M47819',
+										'M47896', 'M47897', 'M47898', 'M47899', 'M479', 'M4800', 'M4806', 
+										'M4807', 'M5116', 'M5117', 'M5126', 'M5127', 'M513', 'M5186', 'M5187',
+										'M519', 'M532X7', 'M532X8', 'M533', 'M5386', 'M5387', 'M5388', 'M545',
+										'M5489', 'M549', 'M961', 'M9903', 'M9904', 'M9923', 'M9933', 'M9943',
+										'M9953', 'M9963', 'M9973', 'M9983', 'M9984', 'Q762', 'S335', 'S336', 
+										'S338', 'S339');
+%let radiculopathy_dx_cond = dxcode in :('M4716', 'M5106', 'M519', 'M5414', 'M5415', 'M5416', 'M5417', 'M543', 'M544');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -275,8 +293,10 @@
 				  pci stablecoronary_dx angina_dx
 				  angioplasty atherosclerosis_dx fibromuscular_dx
 				  ivc thrombosis_dx
-				  catheterization pulmonaryhypertension_dx
-				  surgical_drg
+				  catheterization pulmonaryhypertension_dx surgical_drg
+				  verte vertebralfracture_dx bonecancer_dx
+				  knee osteoarthritis_dx meniscaltear_dx
+				  inject etanercept lowbackpain_dx radiculopathy_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -322,6 +342,10 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &angioplasty_cond then angioplasty=1;
 			if &ivc_cond then ivc=1;
 			if &catheterization_cond then catheterization=1;
+			if &verte_cond then verte=1;
+			if &knee_cond then knee=1;
+			if &inject_cond then inject=1;
+			if &etanercept_cond then etanercept=1;
 	  end;
 	end;
 
@@ -370,6 +394,12 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 			if &fibromuscular_dx_cond then fibromuscular_dx=1;
 			if &thrombosis_dx_cond then thrombosis_dx=1;
 			if &pulmonaryhypertension_dx_cond then pulmonaryhypertension_dx=1;
+			if &vertebralfracture_dx_cond then vertebralfracture_dx=1;
+			if &bonecancer_dx_cond then bonecancer_dx=1;
+			if &osteoarthritis_dx_cond then osteoarthritis_dx=1;
+			if &meniscaltear_dx_cond then meniscaltear_dx=1;
+			if &lowbackpain_dx_cond then lowbackpain_dx=1;
+			if &radiculopathy_dx_cond then radiculopathy_dx=1;
 	  end;
 	end;
 	
@@ -559,6 +589,16 @@ run;
 	 catheterization = "HCPCS:pulmonary artery catheterization (Swan-Ganz replacement)"
 	 pulmonaryhypertension_dx = "ICD:pulmonary hypertension or cardiac tamponade"
 	 surgical_drg = "DRG: surgical MS-DRG "
+	 verte = "HCPCS: vertebroplasty or kyphoplasty"
+	 vertebralfracture_dx = "ICD:vertebral fractures"
+	 bonecancer_dx="ICD:bone cancer, myeloma, hemongioma"
+	 knee ="HCPCS:arthroscopic debridement/ chondroplasty of the knee"
+	 osteoarthritis_dx = "ICD:osteoarthritis or chondromalacia"
+	 meniscaltear_dx = "ICD:meniscal tears"
+	 inject = "HCPCS: epidural, facet, or trigger point injections "
+	 etanercept = "HCPCS:etanercept injection"
+	 lowbackpain_dx = "ICD:lower back pain"
+	 radiculopathy_dx = "ICD: radiculopathy"
 	;
 	drop betos;
 	run;

@@ -66,8 +66,10 @@ run;
 					stablecoronary_dx
 					angina_dx 
 					thrombosis_dx 
+					bonecancer_dx
+					lowbackpain_dx radiculopathy_dx
 					;
-%Let Dim_Var = 32;
+%Let Dim_Var = 35;
 
 %macro FindFirstDxDate();
 *** Sort claims by ID and date of claim;

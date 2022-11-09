@@ -788,6 +788,37 @@ run;
 
 %mend alg_ivc;
 
+
+/*
+algorithm 28. cathe (pulmonary artery cathe (Swan-Ganz replacement))
+
+Do not perform pulmonary artery cathe for monitoring purposes during an inpatient stay that involved an ICU and a nonsurgical MS-DRG and when the claim contains no diagnoses indicating pulmonary hypertension, cardiac tamponade, or preoperative assessment
+
+Denominator:Patients who were hospitalized (inpatient) without a surgical MS-DRG and do not have pulmonary hypertension or cardiac tamponade
+*/
+
+%let vars_cathe = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				catheterization pulmonaryhypertension_dx surgical_drg;
+
+%macro alg_cathe();
+
+data output.cathe_sensitive(keep=&vars_cathe);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = catheterization;
+if src ='IP';
+run;
+
+data output.cathe_specific;
+set output.cathe_sensitive;
+if pulmonaryhypertension_dx=0 and surgical_drg=0;
+run;
+
+%patient_level_output(output.cathe_sensitive, output.cathe_sensitive_patient);
+%patient_level_output(output.cathe_specific, output.cathe_specific_patient);
+
+%mend alg_cathe;
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -819,6 +850,7 @@ quit;
 /*25*/%alg_pci();	
 /*26*/%alg_angioplasty();	
 /*27*/%alg_ivc();	
+/*28*/%alg_cathe();	
 
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
