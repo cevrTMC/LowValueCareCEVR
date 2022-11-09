@@ -818,6 +818,35 @@ run;
 
 %mend alg_cathe;
 
+/*
+algorithm 29. verte (vertebroplasty or kyphoplasty)
+
+Do not perform vertebroplasty or kyphoplasty for osteoporotic vertebral fracture with no bone cancers, myeloma, or hemangioma
+
+Denominator: Patients with osteoporosis and with vertebral fractures and without bone cancer, myeloma, hemongioma
+*/
+
+%let vars_verte = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				verte vertebralfracture_dx last_osteoporosis_dx last_bonecancer_dx;
+
+%macro alg_verte();
+
+data output.verte_sensitive(keep=&vars_verte);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = verte;
+if vertebralfracture_dx=1 and 
+   (last_osteoporosis_dx>. and clm_dt-last_osteoporosis_dx<= 365);
+run;
+
+data output.verte_specific;
+set output.verte_sensitive;
+if not (last_bonecancer_dx>. and clm_dt-last_bonecancer_dx<=365);
+run;
+
+%patient_level_output(output.verte_sensitive, output.verte_sensitive_patient);
+%patient_level_output(output.verte_specific, output.verte_specific_patient);
+
+%mend alg_verte;
 
 proc datasets library=output kill;
 run;
@@ -851,6 +880,7 @@ quit;
 /*26*/%alg_angioplasty();	
 /*27*/%alg_ivc();	
 /*28*/%alg_cathe();	
+/*29*/%alg_verte();	
 
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
