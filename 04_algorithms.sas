@@ -879,6 +879,35 @@ run;
 %mend alg_knee;
 
 
+/*
+algorithm31. inject (epidural, facet, or trigger point injections)
+
+Do not perform outpatient epidural, facet, or trigger point injections for lower back pain, excluding etanercept, for patients with no radiculopathy diagnoses in the claim
+
+Patients with lower back pain without radiculopathy
+*/
+
+%let vars_inject = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				inject etanercept last_lowbackpain_dx last_radiculopathy_dx;
+
+%macro alg_inject();
+
+data output.inject_sensitive(keep=&vars_inject);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = inject and (not etanercept) and (src ne "IP");
+if (last_lowbackpain_dx>. and clm_dt-last_lowbackpain_dx<=14);
+run;
+
+data output.inject_specific;
+set output.inject_sensitive;
+if not ((src = "IP") or (last_radiculopathy_dx>. and clm_dt-last_radiculopathy_dx<=14));
+run;
+
+%patient_level_output(output.inject_sensitive, output.inject_sensitive_patient);
+%patient_level_output(output.inject_specific, output.inject_specific_patient);
+
+%mend alg_inject;
+
 proc datasets library=output kill;
 run;
 quit;
@@ -913,6 +942,7 @@ quit;
 /*28*/%alg_cathe();	
 /*29*/%alg_verte();	
 /*30*/%alg_knee();	
+/*31*/%alg_inject();	
 
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
