@@ -848,6 +848,37 @@ run;
 
 %mend alg_verte;
 
+
+/*
+algorithm 30. knee (arthroscopic debridement/ chondroplasty of the knee)
+
+Do not perform arthroscopic debridement / chondroplasty of the knee for patients with diagnosis of osteoarthritis or chondromalacia and no meniscal tears
+
+Patients with diagnosis of osteoarthritis or chondromalacia and without meniscal tears
+*/
+
+%let vars_knee = desy_sort_key npi src bene_race_cd clm_dt lvc 
+				knee osteoarthritis_dx meniscaltear_dx;
+
+%macro alg_knee();
+
+data output.knee_sensitive(keep=&vars_knee);
+set lvc_etl.claims_all_flag_firstdx_nextdx;
+lvc = knee;
+if osteoarthritis_dx=1;
+run;
+
+data output.knee_specific;
+set output.knee_sensitive;
+if meniscaltear_dx=0;
+run;
+
+%patient_level_output(output.knee_sensitive, output.knee_sensitive_patient);
+%patient_level_output(output.knee_specific, output.knee_specific_patient);
+
+%mend alg_knee;
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -881,6 +912,7 @@ quit;
 /*27*/%alg_ivc();	
 /*28*/%alg_cathe();	
 /*29*/%alg_verte();	
+/*30*/%alg_knee();	
 
 	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/
