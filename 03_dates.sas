@@ -71,44 +71,53 @@ run;
 					;
 %Let Dim_Var = 35;
 
-%macro FindFirstDxDate();
+/*This SAS macro create varibles for the earliest date, the last date, and the previous date of each of 35 
+  conditions, which will be used in low-value-care algorithms. 
+ */
+%macro firstLastPrevDates(input);
 *** Sort claims by ID and date of claim;
-proc sort data=lvc_etl.claims_all_flag;
+proc sort data=&input;
 	by desy_sort_key clm_dt;
 run;
 
-data lvc_etl.claims_all_flag_firstDx;
-	set lvc_etl.claims_all_flag;
+data &input._FLPDx;
+	set &input;
 	by desy_sort_key clm_dt;
 
  	%DO i=1 %TO &Dim_Var.;
  		%let cond = %scan(&hist_conditions,&i,", ");
 	
  		if first.desy_sort_key then do; 
-			&cond._date=.; first_&cond.=.; last_&cond.=.;prev_&cond.=.; 
+			first_&cond.=.; last_&cond.=.;prev_&cond.=.; 
  		end;
  		retain first_&cond. last_&cond. hosp_&cond. prev_&cond.;
 
  		if &cond then do;
   			prev_&cond. = last_&cond.;
-  			&cond._date = clm_dt;
   			if first_&cond.=. then first_&cond. = clm_dt; 
   			last_&cond. = clm_dt;
  		end;
-
- 		format clm_dt &cond._date first_&cond. last_&cond. prev_&cond. mmddyy10.;
+	
+ 		format clm_dt first_&cond. last_&cond. prev_&cond. mmddyy10.;
  	%end;
  	format DOB_DT agefmt. gndr_cd $genderfmt. bene_race_cd $racefmt.;
 run;
 
-%mend FindFirstDxDate;
+proc sort data=&input._FLPDx;
+	by desy_sort_key clm_dt;
+run;
+
+%mend firstLastPrevDates;
 
 %let next_conditions low_risk_noncard 
 					 plantarfasciitis_dx
 					 dialysis_betos;
 %Let Dim_nextVar = 3;
 
-%macro nextDxDate(input);
+/*This SAS macro create varibles for the next date of each of 3 
+  conditions, which will be used in some low-value-care algorithms. 
+ */
+%macro nextDate(input);
 *** Sort claims by ID and date of claim;
 proc sort data=&input.;
  	by desy_sort_key descending clm_dt;
@@ -137,7 +146,7 @@ proc sort data=&input._nextDx;
 	by desy_sort_key clm_dt;
 run;
 
-%mend nextDxDate;
+%mend nextDate;
 
 
 /* list all patient ids with flag indicating whether the patient had ever received the lvc */
@@ -158,40 +167,40 @@ run;
 /*output analytic data, tranfrom to STATA format */
 %macro patient_level_output(input,output);
 
-/*reformat race */
-data tmp;
-	set &input.;
-	race_numeric = input(BENE_RACE_CD, 2.);
-	format race_numeric racefmt.;
-	drop BENE_RACE_CD;
-	rename race_numeric=race;
+	/*reformat race */
+	data tmp;
+		set &input.;
+		race_numeric = input(BENE_RACE_CD, 2.);
+		format race_numeric racefmt.;
+		drop BENE_RACE_CD;
+		rename race_numeric=race;
 
-	gender_numeric = input(gndr_cd, 2.);
-	format gender_numeric sexfmt.;
-	drop gndr_cd;
-	rename gender_numeric=gender;
-run;
+		gender_numeric = input(gndr_cd, 2.);
+		format gender_numeric sexfmt.;
+		drop gndr_cd;
+		rename gender_numeric=gender;
+	run;
 
-%collapse(tmp,lvc, &output.);
+	%collapse(tmp,lvc, &output.);
 
-proc freq data=&output.;
-table num /missing;
-run;
+	proc freq data=&output.;
+	table num /missing;
+	run;
 
-PROC EXPORT DATA=tmp
-	OUTFILE="&outdir\&input..dta"			
-	DBMS=dta REPLACE;
-	fmtlib=work.formats;
-RUN;
+	PROC EXPORT DATA=tmp
+		OUTFILE="&outdir\&input..dta"			
+		DBMS=dta REPLACE;
+		fmtlib=work.formats;
+	RUN;
 
-PROC EXPORT DATA=&output.
-	OUTFILE="&outdir\&output..dta"			
-	DBMS=dta REPLACE;
-	fmtlib=work.formats;
-RUN;
+	PROC EXPORT DATA=&output.
+		OUTFILE="&outdir\&output..dta"			
+		DBMS=dta REPLACE;
+		fmtlib=work.formats;
+	RUN;
 
 %mend patient_level_output;
 
-%FindFirstDxDate();
-%nextDxDate(lvc_etl.claims_all_flag_firstDx);
+%firstLastPrevDates(lvc_etl.claims_all_flag);
+%nextDate(lvc_etl.claims_all_flag_FLPDx);
 
