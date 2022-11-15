@@ -1,7 +1,4 @@
-README
-================
-Lichen Liang
-November 1, 2022
+
 
 # LowValueCareCEVR
 
