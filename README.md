@@ -27,9 +27,9 @@ large claim file into smaller chunk files so that SAS can easily process
 each chunk file .
 
 Each claim-base file will be divided into many smaller chunk files, each
-containing approximately 1,000,000 claims. The corresponding
-line/revenue file is also divided into smaller chunk files containing
-the same claims as in the corresponding claim basic chunk file.
+containing approximately 1,000,000 claims. The line/revenue file is also
+divided into smaller chunk files containing the same claims as in the
+corresponding base-claim chunk file.
 
 ### 2. Transform claim file
 
