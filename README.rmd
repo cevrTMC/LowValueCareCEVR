@@ -1,7 +1,4 @@
 ---
-title: "README"
-author: Lichen Liang
-date: November 1, 2022
 output: github_document
 ---
 
@@ -9,43 +6,51 @@ output: github_document
 
 Low Value Care project at CEVR, Tufts Medical Center
 
-### Source data
+## Source data
 
-This project uses CMS LDS data, including inpatient data (100%, 2017-2020), outpatient data (100%, 2017-2020), carrier data (5%, 2017-2020). Each inpatient claim file consists of two files: inpatient base-claim file and inpatient revenue-center file. Each outpatient claim file consists of two files: outpatient base-claim file and outpatient revenue-center file. Each carrier claim file consists of two files: carrier base-claim file and carrier line file.
+This project uses CMS LDS data, including inpatient data (100%, 2017-2020), outpatient data (100%, 2017-2020), carrier data (5%, 2017-2020).
 
-### Split large claim files by claim no.
+Each inpatient claim file consists of two files: inpatient base-claim file and inpatient revenue-center file.
 
-Due to the large size of a single claim file, the claim file needs to be split into smaller chunks before further processing.
+Each outpatient claim file consists of two files: outpatient base-claim file and outpatient revenue-center file.
 
-Each claim-base file will be divided into many smaller chunk files, each containing approximately 1,000,000 claims. The corresponding line/revenue file is also divided into smaller chunk files containing the same claim No. as in the corresponding claim basic chunk file.
+Each carrier claim file consists of two files: carrier base-claim file and carrier line file.
 
-### Transform claim file
+## Steps of Processing
 
-merge claim-base file and line/revenue file into one claim file, with each record containing all ICD and HCPCS codes.
+### 1. Split large claim files by claims
 
-### Flag conditions
+The claim file is too large for SAS to process. This step splits the large claim file into smaller chunk files so that SAS can easily process each chunk file .
 
-This SAS macro scans HCPCS/ICD-10/BETOS/DRG codes from inpatient/outpatient/carrier claims for 84 comorbidities and creates variables to indicate each condition found. The 84 conditions include 33 HCPCS conditions, 48 ICD conditions, 2 BETOS conditions and 1 DRG condition.
+Each claim-base file will be divided into many smaller chunk files, each containing approximately 1,000,000 claims. The corresponding line/revenue file is also divided into smaller chunk files containing the same claims as in the corresponding claim basic chunk file.
 
-There will be approximately 150 output files, including 48(4 years\*12 chunks) inpatient flag files, 48(4 year\*12 chunks) outpatient flag files, and 48 (4 year\*12 chunks) carrier flag files.
+### 2. Transform claim file
 
-+-------------+--------------------------------------------------------+
-| Type        | Output Flag Files                                      |
-+=============+========================================================+
-| Inpatient   | IP\_[year]\_[chunkid]\_flag                        |
-+-------------+--------------------------------------------------------+
-| Outpatient  | OP\_[year]\_[chunkid]\_flag                        |
-+-------------+--------------------------------------------------------+
-| Carrier     | CR\_[year]\_[chunkid]\_flag                        |
-+-------------+--------------------------------------------------------+
+This step merges claim-base file and line/revenue file into one claim file, with each record containing all ICD and HCPCS codes.
+
+### 3. Flag conditions
+
+This step scans HCPCS/ICD-10/BETOS/DRG codes from inpatient/outpatient/carrier claims for 84 comorbidities and creates variables to indicate each condition found. The 84 conditions include 33 HCPCS conditions, 48 ICD conditions, 2 BETOS conditions and 1 DRG condition.
+
+As shown in the table below, after this step of processing, there will be approximately 150 output files, including 48(4 years\*12 chunks) inpatient flag files, 48(4 year\*12 chunks) outpatient flag files, and 48 (4 year\*12 chunks) carrier flag files.
+
++-------------+-------------------------------------------------------+
+| Type        | Output Flag Files                                     |
++=============+=======================================================+
+| Inpatient   | IP\_[year]\_[chunkid]\_flag                           |
++-------------+-------------------------------------------------------+
+| Outpatient  | OP\_[year]\_[chunkid]\_flag                           |
++-------------+-------------------------------------------------------+
+| Carrier     | CR\_[year]\_[chunkid]\_flag                           |
++-------------+-------------------------------------------------------+
 
 note: year=2017,2018,2019,2020, chunkid=1-12
 
-### Split-Merge flag files by bene_id
+### 4. Split-Merge flag files by bene_id
 
 It is not possible to simply combine all the year and type files into one large combined flags file that is too large to handle in SAS. Each flag file needs to be split by bene_id, so flag files of a subgroup of bene_ids can be combined, resulting in a smaller combined flag file that SAS can process separately.
 
-### Create Date variables
+### 5. Create Date variables
 
 The Low-Value-Care algorithm need the check individual's claim history of conditions.
 
@@ -57,14 +62,14 @@ The Low-Value-Care algorithm need the check individual's claim history of condit
 | nextDate           | This SAS macro create variables for the next date of each of 3 conditions, which will be used in some low-value-care algorithms                                        |
 +--------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-### Label Low-Value-Care
+### 6. Label Low-Value-Care
 
 This step labels low-value care based on various LVC definitions(algorithm).
 
 The input file for each LVC algorithm is "claims_all_flag\_[chunkid]\_FLPDx_nextDx.sas8bdat" which is the output of the "Create Date Variables" step.
 
 +-----+--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| No. | SAS macro          | Description                                                                                                                                                                                                                                           |
+| No. | SAS macro          | LVC Description                                                                                                                                                                                                                                           |
 +=====+====================+=======================================================================================================================================================================================================================================================+
 | 1   | alg_psa            | prostate-specific antigen (PSA) testing in men age 70 or older                                                                                                                                                                                        |
 +-----+--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
