@@ -176,16 +176,254 @@ pre code {
 <p>Low Value Care project at CEVR, Tufts Medical Center</p>
 <div id="source-data" class="section level3">
 <h3>Source data</h3>
-<p>CMS LDS inpatient data (100%, 2017-2020), outpatient data (100%, 2017-2020), carrier data (5%, 2017-2020). Each inpatient claim file include two files: inpatient base-claim file and inpatient revenue-center file. Each outpatient claim file include two files: outpatient base-claim file and outpatient revenue-center file. Each carrier claim file include two files: carrier base-claim file and carrier line file.</p>
+<p>This project uses CMS LDS data, including inpatient data (100%, 2017-2020), outpatient data (100%, 2017-2020), carrier data (5%, 2017-2020). Each inpatient claim file consists of two files: inpatient base-claim file and inpatient revenue-center file. Each outpatient claim file consists of two files: outpatient base-claim file and outpatient revenue-center file. Each carrier claim file consists of two files: carrier base-claim file and carrier line file.</p>
 </div>
 <div id="split-large-claim-files-by-claim-no." class="section level3">
 <h3>Split large claim files by claim no.</h3>
 <p>Due to the large size of a single claim file, the claim file needs to be split into smaller chunks before further processing.</p>
-<p>Each claim-base file is divided into many smaller chunk files, each containing approximately 100,000 claims. The corresponding line/revenue file is also divided into smaller chunk files containing the same claim No. as in the corresponding claim basic chunk file.</p>
+<p>Each claim-base file will be divided into many smaller chunk files, each containing approximately 100,000 claims. The corresponding line/revenue file is also divided into smaller chunk files containing the same claim No. as in the corresponding claim basic chunk file.</p>
 </div>
 <div id="transform-claim-file" class="section level3">
 <h3>Transform claim file</h3>
 <p>merge claim-base file and line/revenue file into one claim file, with each record containing all ICD and HCPCS codes.</p>
+</div>
+<div id="flag-conditions" class="section level3">
+<h3>Flag conditions</h3>
+<p>This SAS macro scans HCPCS/ICD-10/BETOS/DRG codes from inpatient/outpatient/carrier claims for 84 comorbidities and creates variables to indicate each condition found. The 84 conditions include 33 HCPCS conditions, 48 ICD conditions, 2 BETOS conditions and 1 DRG condition.</p>
+<p>There will be approximately 150 output files, including 48(4 years*12 chunks) inpatient flag files, 48(4 year*12 chunks) outpatient flag files, and 48 (4 year*12 chunks) carrier flag files.</p>
+<table style="width:71%;">
+<colgroup>
+<col width="29%" />
+<col width="41%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Output Flag Files</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Inpatient</td>
+<td>IP_[year]_[chunkid]_flag</td>
+</tr>
+<tr class="even">
+<td>Outpatient</td>
+<td>OP_[year]_[chunkid]_flag</td>
+</tr>
+<tr class="odd">
+<td>Carrier</td>
+<td>CR_[year]_[chunkid]_flag</td>
+</tr>
+</tbody>
+</table>
+<p>note: year=2017,2018,2019,2020, chunkid=1-12</p>
+</div>
+<div id="split-flag-files-by-bene_id" class="section level3">
+<h3>Split flag files by bene_id</h3>
+<p>It is not possible to simply combine all the year and type files into one large combined flags file that is too large to handle in SAS. Each flag file needs to be split by bene_id, so flag files of a subgroup of bene_ids can be combined, resulting in a smaller combined flag file that SAS can process separately.</p>
+</div>
+<div id="create-date-variables" class="section level3">
+<h3>Create Date variables</h3>
+<p>The Low-Value-Care algorithm need the check individual’s claim history of conditions.</p>
+<table>
+<colgroup>
+<col width="11%" />
+<col width="88%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>SAS macro</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>firstLastPrevDates</td>
+<td>This SAS macro create variables for the earliest date, the last date, and the previous date of each of 35 conditions, which will be used in low-value-care algorithms.</td>
+</tr>
+<tr class="even">
+<td>nextDate</td>
+<td>This SAS macro create variables for the next date of each of 3 conditions, which will be used in some low-value-care algorithms</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="label-low-value-care" class="section level3">
+<h3>Label Low-Value-Care</h3>
+<p>This step labels low-value care based on various LVC definitions(algorithm).</p>
+<p>The input file for each LVC algorithm is “claims_all_flag_[chunkid]_FLPDx_nextDx.sas8bdat” which is the output of the “Create Date Variables”&quot; step.</p>
+<table>
+<colgroup>
+<col width="2%" />
+<col width="7%" />
+<col width="90%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>No.</th>
+<th>SAS macro</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>alg_psa</td>
+<td>prostate-specific antigen (PSA) testing in men age 70 or older</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>alg_cerv</td>
+<td>screen women age 65 or older for cervical cancer if they have had adequate prior screening and are not otherwise at high risk for cervical cancer</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>alg_vd</td>
+<td>vitamin D testing in non-high risk patients</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>alg_lbp</td>
+<td>imaging for low back pain within the first six weeks, unless another diagnosis that warrants imaging is present</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>alg_crc</td>
+<td>colorectal cancer screening for patients age 85 or older</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>alg_canscrn</td>
+<td>routine cancer screening for dialysis patients with limited life expectancy</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>alg_bonemd</td>
+<td>bone mineral density testing within 2 years of a prior bone mineral density test for patients with osteoporosis</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>alg_hypercoagula</td>
+<td>hypercoagulability test in patients with deep vein thrombosis (DVT) with a known cause</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>alg_t3</td>
+<td>total or free T3 level when assessing levothyroxine (T4) dose in hypothyroid patients</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>alg_xray</td>
+<td>chest X-ray not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure patients undergoing low or intermediate risk non-cardiothoracic surgical procedure</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>alg_echo</td>
+<td>echocardiogram not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>alg_pft</td>
+<td>pulmonary function test (PFT) not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>alg_eenc</td>
+<td>electrocardiogram, echocardiogram, nuclear medicine imaging, cardiac MRI or CT angiography not associated with inpatient or emergency care and occurring within 30 days prior to a low or intermediate risk non-cardiothoracic surgical procedure</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td>alg_mfct</td>
+<td>maxillofacial CT study with a diagnosis of sinusitis and no other complications and no sinusitis diagnosis within 30 to 365 days before CT</td>
+</tr>
+<tr class="odd">
+<td>15</td>
+<td>alg_headimg</td>
+<td>CT or MRI imaging for a diagnosis of syncope without another diagnosis for warranted imaging</td>
+</tr>
+<tr class="even">
+<td>16</td>
+<td>alg_headimg2</td>
+<td>brain CT or MRI imaging for non-post-traumatic, nonthunderclap headache diagnosis without another diagnosis for warranted imaging.</td>
+</tr>
+<tr class="odd">
+<td>17</td>
+<td>alg_eeg</td>
+<td>EEG for headache diagnosis without epilepsy or convulsions noted in current or prior claims</td>
+</tr>
+<tr class="even">
+<td>18</td>
+<td>alg_carotid</td>
+<td>carotid imaging not associated with inpatient or emergency care for patients without a stroke, TIA, or focal neurological symptom in claim</td>
+</tr>
+<tr class="odd">
+<td>19</td>
+<td>alg_carotidsyn</td>
+<td>imaging of the carotid arteries for simply syncope without other neurologic symptoms</td>
+</tr>
+<tr class="even">
+<td>20</td>
+<td>alg_radio</td>
+<td>radiographic or MR imaging with diagnosis of plantar faciitis occuring within 2 weeks of initial foot pain diagnosis</td>
+</tr>
+<tr class="odd">
+<td>21</td>
+<td>alg_stress</td>
+<td>stress testing not associated with inpatient or emergency care for patients with an established diagnosis of acute myocardial infraction</td>
+</tr>
+<tr class="even">
+<td>22</td>
+<td>alg_endarterectomy</td>
+<td>carotid endarterectomy (CEA), not associated with an ER visit, for patients without a history of stroke or TIA and without stroke, TIA, or focal neurological symptoms noted in claim</td>
+</tr>
+<tr class="odd">
+<td>23</td>
+<td>alg_homocysteine</td>
+<td>homocysteine testing with no diagnoses of folate or B12 deficiencies in the claim</td>
+</tr>
+<tr class="even">
+<td>24</td>
+<td>alg_pth</td>
+<td>parathyroid hormone (PTH) measurement for patients with chronic kidney disease and no dialysis services before PTH testing or within 30 days following testing, as well as no hypercalcemia diagnosis during the year</td>
+</tr>
+<tr class="odd">
+<td>25</td>
+<td>alg_pci</td>
+<td>percutaneous coronary intervention (PCI) with balloon angioplasty or stent placement, not associated with an ER visit, for patients with stable coronary disease</td>
+</tr>
+<tr class="even">
+<td>26</td>
+<td>alg_angioplasty</td>
+<td>renal/visceral angioplasty or stent placement with a diagnosis of renal atherosclerosis or renovascular hypertension noted in procedure claim</td>
+</tr>
+<tr class="odd">
+<td>27</td>
+<td>alg_ivc</td>
+<td>inferior vena cava(IVC) filter placement in patients without pulmonary embolism or deep vein thrombosis</td>
+</tr>
+<tr class="even">
+<td>28</td>
+<td>alg_cathe</td>
+<td>pulmonary artery cathe for monitoring purposes during an inpatient stay that involved an ICU and a nonsurgical MS-DRG and when the claim contains no diagnoses indicating pulmonary hypertension, cardiac tamponade, or preoperative assessment</td>
+</tr>
+<tr class="odd">
+<td>29</td>
+<td>alg_verte</td>
+<td>vertebroplasty or kyphoplasty for osteoporotic vertebral fracture with no bone cancers, myeloma, or hemangioma</td>
+</tr>
+<tr class="even">
+<td>30</td>
+<td>alg_knee</td>
+<td>arthroscopic debridement / chondroplasty of the knee for patients with diagnosis of osteoarthritis or chondromalacia and no meniscal tears</td>
+</tr>
+<tr class="odd">
+<td>31</td>
+<td>alg_inject</td>
+<td>outpatient epidural, facet, or trigger point injections for lower back pain, excluding etanercept, for patients with no radiculopathy diagnoses in the claim</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 

@@ -22,19 +22,19 @@ This SAS macro scans HCPCS/ICD-10/BETOS/DRG codes from inpatient/outpatient/carr
 
 There will be approximately 150 output files, including 48(4 years\*12 chunks) inpatient flag files, 48(4 year\*12 chunks) outpatient flag files, and 48 (4 year\*12 chunks) carrier flag files.
 
-+--------------------+-----------------------------+
-| Type               | Output Flag Files           |
-+====================+=============================+
-| Inpatient          | IP\_[year]\_[chunkid]\_flag |
-+--------------------+-----------------------------+
-| Outpatient         | OP\_[year]\_[chunkid]\_flag |
-+--------------------+-----------------------------+
-| Carrier            | CR\_[year]\_[chunkid]\_flag |
-+--------------------+-----------------------------+
++------------+-----------------------------+
+| Type       | Output Flag Files           |
++============+=============================+
+| Inpatient  | IP\_[year]\_[chunkid]\_flag |
++------------+-----------------------------+
+| Outpatient | OP\_[year]\_[chunkid]\_flag |
++------------+-----------------------------+
+| Carrier    | CR\_[year]\_[chunkid]\_flag |
++------------+-----------------------------+
 
 note: year=2017,2018,2019,2020, chunkid=1-12
 
-### Split flag files by bene_id
+### Split-Merge flag files by bene_id
 
 It is not possible to simply combine all the year and type files into one large combined flags file that is too large to handle in SAS. Each flag file needs to be split by bene_id, so flag files of a subgroup of bene_ids can be combined, resulting in a smaller combined flag file that SAS can process separately.
 
