@@ -22,6 +22,8 @@ This project uses CMS LDS data, including inpatient data (100%,
 
 ### 1. Split claim files
 
+Powershell code: **chunk.ps1**
+
 The claim file is too large for SAS to process. This step splits the
 large claim file into smaller chunk files so that SAS can easily process
 each chunk file .
@@ -31,14 +33,15 @@ containing approximately 1,000,000 claims. The line/revenue file is also
 divided into smaller chunk files containing the same claims as in the
 corresponding base-claim chunk file.
 
-We wrote a powershell script (*chunk.ps1*) to split claim files. After
-this step of processing, there will be approximately 150 output files,
-including 48(4 years\*12 chunks) inpatient files, 48(4 year\*12 chunks)
-outpatient files, and 48 (4 year\*12 chunks) carrier files. (Note: 12 is
-the estimated number of chunk files for each claim type. The actual
-numer will be updated once we finish processing).
+After this step of processing, there will be approximately 150 output
+files, including 48(4 years\*12 chunks) inpatient files, 48(4 year\*12
+chunks) outpatient files, and 48 (4 year\*12 chunks) carrier files.
+(Note: 12 is the estimated number of chunk files for each claim type.
+The actual numer will be updated once we finish processing).
 
-### 2. Transform claim file (01\_ETL.SAS)
+### 2. Transform claim files
+
+SAS code: **01\_ETL.SAS**
 
 This step merges claim-base file and line/revenue file into one claim
 file, with each record containing all ICD and HCPCS codes.
@@ -59,7 +62,9 @@ file, with each record containing all ICD and HCPCS codes.
 | Outpatient | OP\_\[year\]\_\[chunkid\] |
 | Carrier    | CR\_\[year\]\_\[chunkid\] |
 
-### 3. Flag conditions (02\_FLAG.SAS)
+### 3. Flag conditions
+
+SAS code: **02\_FLAG.SAS**
 
 This step scans HCPCS/ICD-10/BETOS/DRG codes from
 inpatient/outpatient/carrier claims for 84 comorbidities and creates
@@ -184,14 +189,18 @@ condition.
 | 94  | radiculopathy\_dx         | ICD: radiculopathy                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 95  | SRC                       | Source of claim, CR (Carrier) IP(Inpatient) OP(Outpatient)                                                                                                                                                                                                                                                                                                                                                                                                       |
 
-### 4. Split-Merge flag files by ID (Not implemented yet)
+### 4. Split-Merge flag files by ID
+
+SAS code: Not implemented yet
 
 Simply combining all the year and type files into one large combined
 flags file is too large to handle in SAS. Each flag file will be split
 by id, so flag files of a subgroup of ids can be combined, resulting in
 a smaller combined flag file that SAS can process separately.
 
-### 5. Create Date variables (03\_DATES.SAS)
+### 5. Create Date variables
+
+SAS code: **03\_DATES.SAS**
 
 The Low-Value-Care algorithm need the check individual’s claim history
 of conditions.
@@ -201,7 +210,9 @@ of conditions.
 | firstLastPrevDates | Create variables for the earliest date, the last date, and the previous date of each of 35 specific conditions, which will be used in low-value-care algorithms. |
 | nextDate           | Create variables for the next date of each of 3 specific conditions, which will be used in some low-value-care algorithms                                        |
 
-### 6. Label Low-Value-Care (04\_ALGORITHMS.SAS)
+### 6. Label Low-Value-Care
+
+SAS code: **04\_Algorithms.SAS**
 
 This step labels low-value care based on various LVC
 definitions(algorithm).
