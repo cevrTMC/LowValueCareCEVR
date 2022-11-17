@@ -6,17 +6,17 @@ Low Value Care project at CEVR, Tufts Medical Center
 ## Source data
 
 This project uses CMS LDS data, including inpatient data (100%,
-2017-2020), outpatient data (100%, 2017-2020), carrier data (5%,
+2017-2020), outpatient data (100%, 2017-2020), and carrier data (5%,
 2017-2020).
 
-Each inpatient claim file consists of two files: inpatient base-claim
-file and inpatient revenue-center file.
+-   Each inpatient claim file consists of two files: inpatient
+    base-claim file and inpatient revenue-center file.
 
-Each outpatient claim file consists of two files: outpatient base-claim
-file and outpatient revenue-center file.
+-   Each outpatient claim file consists of two files: outpatient
+    base-claim file and outpatient revenue-center file.
 
-Each carrier claim file consists of two files: carrier base-claim file
-and carrier line file.
+-   Each carrier claim file consists of two files: carrier base-claim
+    file and carrier line file.
 
 ## Steps of Processing
 
@@ -31,12 +31,33 @@ containing approximately 1,000,000 claims. The line/revenue file is also
 divided into smaller chunk files containing the same claims as in the
 corresponding base-claim chunk file.
 
-We wrote a powershell script (*chunk.ps1*) to split claim files.
+We wrote a powershell script (*chunk.ps1*) to split claim files. After
+this step of processing, there will be approximately 150 output files,
+including 48(4 years\*12 chunks) inpatient files, 48(4 year\*12 chunks)
+outpatient files, and 48 (4 year\*12 chunks) carrier files. (Note: 12 is
+the estimated number of chunk files for each claim type. The actual
+numer will be updated once we finish processing).
 
 ### 2. Transform claim file (01\_ETL.SAS)
 
 This step merges claim-base file and line/revenue file into one claim
 file, with each record containing all ICD and HCPCS codes.
+
+#### Table: SAS macros in the file
+
+| SAS macro    | description                     |
+|--------------|---------------------------------|
+| etl\_lds\_ip | transform Inpatient claim file  |
+| etl\_lds\_op | transform Outpatient claim file |
+| etl\_lds\_cr | transform Carrier claim file    |
+
+#### Table: output files of the processing
+
+| Type       | Output Flag Files         |
+|------------|---------------------------|
+| Inpatient  | IP\_\[year\]\_\[chunkid\] |
+| Outpatient | OP\_\[year\]\_\[chunkid\] |
+| Carrier    | CR\_\[year\]\_\[chunkid\] |
 
 ### 3. Flag conditions (02\_FLAG.SAS)
 
@@ -46,12 +67,16 @@ variables to indicate each condition found. The 84 conditions include 33
 HCPCS conditions, 48 ICD conditions, 2 BETOS conditions and 1 DRG
 condition.
 
-After this step of processing, there will be approximately 150 output
-files, including 48(4 years\*12 chunks) inpatient flag files, 48(4
-year\*12 chunks) outpatient flag files, and 48 (4 year\*12 chunks)
-carrier flag files.
+#### Table: SAS macros in the file
 
-#### Table: output files
+| SAS macro   | description                                 |
+|-------------|---------------------------------------------|
+| flag        | creates variables to indicate the condition |
+| process\_ip | flag impatient claim files                  |
+| process\_op | flag outpatient claim files                 |
+| process\_cr | flag carrier claim files                    |
+
+#### Table: output files of the processing
 
 | Type       | Output Flag Files               |
 |------------|---------------------------------|
@@ -59,9 +84,7 @@ carrier flag files.
 | Outpatient | OP\_\[year\]\_\[chunkid\]\_flag |
 | Carrier    | CR\_\[year\]\_\[chunkid\]\_flag |
 
-note: year=2017,2018,2019,2020, chunkid=1-12 (est.)
-
-#### Table: List of variables after flagging
+#### Table: List of variables of output data
 
 | \#  | Variable                  | Label                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 |-----|---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -161,7 +184,7 @@ note: year=2017,2018,2019,2020, chunkid=1-12 (est.)
 | 94  | radiculopathy\_dx         | ICD: radiculopathy                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 95  | SRC                       | Source of claim, CR (Carrier) IP(Inpatient) OP(Outpatient)                                                                                                                                                                                                                                                                                                                                                                                                       |
 
-### 4. Re-Grouping flag files by ID (Not implemented yet)
+### 4. Split-Merge flag files by ID (Not implemented yet)
 
 Simply combining all the year and type files into one large combined
 flags file is too large to handle in SAS. Each flag file will be split
@@ -173,10 +196,10 @@ a smaller combined flag file that SAS can process separately.
 The Low-Value-Care algorithm need the check individual’s claim history
 of conditions.
 
-| SAS macro          | Description                                                                                                                                             |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| firstLastPrevDates | Create variables for the earliest date, the last date, and the previous date of each of 35 conditions, which will be used in low-value-care algorithms. |
-| nextDate           | Create variables for the next date of each of 3 conditions, which will be used in some low-value-care algorithms                                        |
+| SAS macro          | Description                                                                                                                                                      |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| firstLastPrevDates | Create variables for the earliest date, the last date, and the previous date of each of 35 specific conditions, which will be used in low-value-care algorithms. |
+| nextDate           | Create variables for the next date of each of 3 specific conditions, which will be used in some low-value-care algorithms                                        |
 
 ### 6. Label Low-Value-Care (04\_ALGORITHMS.SAS)
 
