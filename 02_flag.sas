@@ -600,7 +600,7 @@ run;
 	 lowbackpain_dx = "ICD: lower back pain"
 	 radiculopathy_dx = "ICD: radiculopathy"
 	;
-	drop betos drg clm_drg_cd clm_no;
+	drop betos drg clm_drg_cd claim_no;
 	run;
 %mend combine_types;
 

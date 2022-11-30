@@ -88,17 +88,24 @@ data &input._FLPDx;
  		%let cond = %scan(&hist_conditions,&i,", ");
 	
  		if first.desy_sort_key then do; 
-			first_&cond.=.; last_&cond.=.;prev_&cond.=.; 
+			first_&cond.=.; last_&cond.=.;prev_&cond.=.;prev_hold_&cond=.; 
  		end;
- 		retain first_&cond. last_&cond. hosp_&cond. prev_&cond.;
+ 		retain first_&cond. last_&cond. prev_&cond. prev_hold_&cond;
+
+		if not missing(prev_&cond) then prev_hold_&cond = prev_&cond;
+ 		prev_&cond = .;
 
  		if &cond then do;
-  			prev_&cond. = last_&cond.;
-  			if first_&cond.=. then first_&cond. = clm_dt; 
+			if(clm_dt ne last_&cond) then 
+			  	prev_&cond. = last_&cond.;
+			else 
+				prev_&cond. = prev_hold_&cond.;  		
+
+			if first_&cond.=. then first_&cond. = clm_dt; 
   			last_&cond. = clm_dt;
  		end;
-	
  		format clm_dt first_&cond. last_&cond. prev_&cond. mmddyy10.;
+		drop prev_hold_&cond.;  
  	%end;
  	format DOB_DT agefmt. gndr_cd $genderfmt. bene_race_cd $racefmt.;
 run;
@@ -116,6 +123,7 @@ run;
 
 /*This SAS macro create varibles for the next date of each of 3 
   conditions, which will be used in some low-value-care algorithms. 
+  next procedure date is applicable only for the claims that that had that procedure.
  */
 %macro nextDate(input);
 *** Sort claims by ID and date of claim;
@@ -130,17 +138,26 @@ data &input._nextDx;
  	%DO i=1 %TO &Dim_nextVar.;
  		%let cond = %scan(&next_conditions,&i,", ");
 
- 		if first.desy_sort_key then do; 
-			next_&cond.=.; 
- 		end;
- 		retain next_&cond. ;
+		if first.desy_sort_key then do; 
+			next_&cond.=.; next_hold_&cond.=.; last_next_&cond.=.; 
+		end;
+		retain next_&cond. next_hold_&cond. last_next_&cond.;
 
- 	if &cond then do;
- 		 next_&cond. = clm_dt;
- 	end;
- 	format clm_dt next_&cond. mmddyy10.;
+		if not missing(next_&cond) then next_hold_&cond = next_&cond;
+ 		next_&cond = .;
+
+		if &cond then do;
+		  if(clm_dt ne last_next_&cond) then 
+ 			 next_&cond. = last_next_&cond.;
+  	  	  else 
+			next_&cond. = next_hold_&cond.;
+	  	  last_next_&cond. = clm_dt;
+	 	end;
+
+		format clm_dt next_&cond. next_hold_&cond. last_next_&cond. mmddyy10.;
+ 		drop next_hold_&cond. last_next_&cond.;
  	%end;
-run;
+ run;
 
 proc sort data=&input._nextDx;
 	by desy_sort_key clm_dt;
@@ -203,4 +220,8 @@ run;
 
 %firstLastPrevDates(lvc_etl.claims_all_flag);
 %nextDate(lvc_etl.claims_all_flag_FLPDx);
+
+data test(keep=desy_sort_key clm_dt low_risk_noncard next_low_risk_noncard) ;
+set lvc_etl.claims_all_flag_FLPDx_nextdx;
+run;
 

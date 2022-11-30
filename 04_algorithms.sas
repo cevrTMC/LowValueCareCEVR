@@ -4,6 +4,11 @@ Low value care algorithms
 
 %let vars_base= desy_sort_key npi src bene_race_cd clm_dt DOB_DT GNDR_CD;
 %let inputdata= lvc_etl.claims_all_flag_FLPDx_nextDx;
+
+proc datasets library=output kill;
+run;
+quit;
+
 /**************************************************
 algorithm 1. PSA (PSA test)
 
@@ -12,7 +17,7 @@ Do not perform prostate-specific antigen (PSA) testing in men age 70 or older
 Denominator: Men age 70 or older without prostate cancer, elevated PSA, or family history of prostate cancer
 */
 
-%let vars_psa= &vars_base psa first_prostate_dx lvc; 
+%let vars_psa= &vars_base psa prostate_dx first_prostate_dx lvc; 
 
 %macro alg_psa(input);
 /* male, age >=70 */
@@ -42,7 +47,7 @@ High risk indicators: history of cancer or dysplasia, diagnoses of other female 
 diethylstilbestrol exposure, HIV/AIDS
 */
 
-%let vars_cerv= &vars_base cerv first_cerv_ex lvc; 
+%let vars_cerv= &vars_base cerv cerv_ex first_cerv_ex lvc; 
 
 %macro alg_cerv(input);
 /*age 65+ , women*/
@@ -73,8 +78,9 @@ High risk indicators: chronic kidney disease, hypercalcemia, chronic conditions,
 
 */
 
-%let vars_vd &vars_base vitaminD_cpt first_chronic_dx last_other_risk_dx 
-	pregnancy_obesity_dx_date last_fracture_vd lvc;
+%let vars_vd &vars_base vitaminD_cpt chronic_dx first_chronic_dx 
+		other_risk_dx last_other_risk_dx 
+	pregnancy_obesity_dx_date fracture_vd last_fracture_vd lvc;
 
 %macro alg_vd(input);
 data output.vd_sensitive(keep=&vars_vd);
@@ -108,24 +114,25 @@ Denominator: Patients who reported having lower back pain and have no known poss
 Known Possible Causes: cancer, external injury, trauma, IV drug abuse, neurologic impairment, osteomyelitis, fever, weight loss, malaise, night sweats, anemia not due to blood loss, myelopathy, neuritis, radiculopathy, tuberculosis, septicemia, endocarditis, intraspinal abscess
 */
 
-%let vars_lbp &vars_base imglbp last_imglbp_inc_dx last_imglbp_exc_dx lvc;
+%let vars_lbp &vars_base imglbp imglbp_inc_dx last_imglbp_inc_dx 
+			imglbp_exc_dx last_imglbp_exc_dx lvc;
 
 %macro alg_lbp(input);
 /*imglbp_inclusion_dx Within 6 weeks before service*/
-data output.imglbp_sensitive(keep=&vars_lbp);
+data output.lbp_sensitive(keep=&vars_lbp);
 set &input;
 lvc = imglbp;
 if last_imglbp_inc_dx>. and clm_dt-last_imglbp_inc<=42;
 run;
 
 /*imglbp_exclusion_dx not within 6 weeks before service*/
-data output.imglbp_specific;
-set output.imglbp_sensitive;
+data output.lbp_specific;
+set output.lbp_sensitive;
 if last_imglbp_exc_dx=. or clm_dt-last_imglbp_exc_dx>42;
 run;
 
-%patient_level_output(output.imglbp_sensitive, output.imglbp_sensitive_patient);
-%patient_level_output(output.imglbp_specific, output.imglbp_specific_patient);
+%patient_level_output(output.lbp_sensitive, output.lbp_sensitive_patient);
+%patient_level_output(output.lbp_specific, output.lbp_specific_patient);
 %mend alg_lbp;
 
 /**************************************************
@@ -136,7 +143,7 @@ Don't perform colorectal cancer screening for patients age 85 or older
 Denominator: Patients age 85 or older without a history of colorectal cancer
 */
 
-%let vars_crc &vars_base crc crc_dx first_crc_cancer_dx lvc;
+%let vars_crc &vars_base crc crc_dx crc_cancer_dx first_crc_cancer_dx lvc;
 
 %macro alg_crc(input);
 /* age >=85 */
@@ -164,7 +171,7 @@ Don’t perform routine cancer screening for dialysis patients with limited life e
 Denominator: Patients age 75 years or older and on dialysis
 */
 
-%let vars_canscrn &vars_base canscrn canscrn_dx first_dialysis lvc;
+%let vars_canscrn &vars_base canscrn canscrn_dx dialysis first_dialysis lvc;
 
 %macro alg_canscrn(input);
 
@@ -175,7 +182,13 @@ lvc = (canscrn or canscrn_dx);
 if DOB_DT>=4 and (first_dialysis>. and clm_dt>=first_dialysis); 
 run;
 
+data output.canscrn_specific;
+set output.canscrn_sensitive;
+run;
+
 %patient_level_output(output.canscrn_sensitive, output.canscrn_sensitive_patient);
+%patient_level_output(output.canscrn_specific, output.canscrn_specific_patient);
+
 %mend alg_canscrn;
 
 
@@ -187,7 +200,10 @@ Don’t perform bone mineral density testing within 2 years of a prior bone minera
 Denominator: Patients with osteoporosis and without cancer or a fragility fracture
 */
 
-%let vars_bonemd &vars_base lvc bonemd prev_bonemd first_osteoporosis_dx first_cancer_dx last_fracture;
+%let vars_bonemd &vars_base lvc bonemd prev_bonemd 
+		osteoporosis_dx first_osteoporosis_dx 
+		cancer_dx first_cancer_dx 
+		fracture last_fracture;
 
 %macro alg_bonemd(input);
 
@@ -217,7 +233,8 @@ denominator: Patients with pulmonary embolism or venous embolism with thrombosis
 
 */
 
-%let vars_hypercoagula &vars_base hypercoagula first_embolism_dx last_embolism_dx lvc;
+%let vars_hypercoagula= &vars_base hypercoagula 
+				embolism_dx first_embolism_dx last_embolism_dx lvc;
 
 %macro alg_hypercoagula(input);
 data output.hypercoagula_sensitive(keep=&vars_hypercoagula);
@@ -227,7 +244,12 @@ if hypercoagula=1 and clm_dt-last_embolism_dx<=90 then lvc = 1;
 if first_embolism_dx>.; /*Patients with pulmonary embolism  */ 
 run;
 
+data output.hypercoagula_specific;
+set output.hypercoagula_sensitive;
+run;
+
 %patient_level_output(output.hypercoagula_sensitive, output.hypercoagula_sensitive_patient);
+%patient_level_output(output.hypercoagula_specific, output.hypercoagula_specific_patient);
 %mend alg_hypercoagula;
 
 /**************************************************
@@ -239,7 +261,7 @@ hypothyroid patients
 denominator: Patients with hypothyroidism
 */
 
-%let vars_t3 &vars_base first_hypothyroidism_dx last_hypothyroidism_dx lvc;
+%let vars_t3= &vars_base hypothyroidism_dx first_hypothyroidism_dx last_hypothyroidism_dx lvc;
 
 %macro alg_t3(input);
 data output.t3_sensitive(keep=&vars_t3);
@@ -249,7 +271,12 @@ if t3=1 and clm_dt-last_hypothyroidism_dx<=365 then lvc = 1;
 if first_hypothyroidism_dx>.; /*Patients with hypothyroidism */ 
 run;
 
+data output.t3_specific;
+set output.t3_sensitive;
+run;
+
 %patient_level_output(output.t3_sensitive, output.t3_sensitive_patient);
+%patient_level_output(output.t3_specific, output.t3_specific_patient);
 %mend alg_t3;
 
 
@@ -262,7 +289,7 @@ Patients undergoing low or intermediate risk non-cardiothoracic surgical procedu
 Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
 */
 
-%let vars_xray &vars_base lvc xray emergencycare 
+%let vars_xray= &vars_base lvc xray emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
 %macro alg_xray(input);
@@ -294,7 +321,7 @@ Do not perform an echocardiogram not associated with inpatient or emergency care
 Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
 */
 
-%let vars_echo &vars_base lvc echocardiogram emergencycare 
+%let vars_echo= &vars_base lvc echocardiogram emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
 %macro alg_echo(input);
@@ -326,7 +353,7 @@ Do not perform a pulmonary function test (PFT) not associated with inpatient or 
 Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
 */
 
-%let vars_pft &vars_base lvc pulmonary emergencycare 
+%let vars_pft=&vars_base lvc pulmonary emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
 %macro alg_pft(input);
@@ -356,7 +383,7 @@ Do not perform electrocardiogram, echocardiogram, nuclear medicine imaging, card
 Denominator: Patients undergoing low or intermediate risk non-cardiothoracic surgical procedure
 */
 
-%let vars_eenc &vars_base lvc eenc emergencycare 
+%let vars_eenc = &vars_base lvc eenc emergencycare 
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
 %macro alg_eenc(input);
@@ -389,7 +416,7 @@ Other related complications: complications of sinusitis, immune deficiencies, na
 */
 
 %let vars_mfct=&vars_base lvc maxillofacialCT sinusitis_dx 
-			   other_related_comp_dx last_sinusitis_dx;
+			   other_related_comp_dx sinusitis_dx last_sinusitis_dx;
 
 %macro alg_mfct(input);
 
@@ -483,7 +510,7 @@ Denominator:Patients with headaches and no indication of epilepsy or convulsions
 */
 
 %let vars_eeg = &vars_base lvc 
-				eeg eeg_headache_dx last_eeg_headache_dx last_epilepsy_dx;
+				eeg eeg_headache_dx last_eeg_headache_dx epilepsy_dx last_epilepsy_dx;
 
 %macro alg_eeg(input);
 
@@ -543,7 +570,8 @@ Other neurologic symptoms: without stroke or TIA, history of stroke or TIA, reti
 */
 
 %let vars_carotidsyn = &vars_base lvc 
-				carotid syncope_dx last_syncope_dx prev_syncope_dx first_neurologic_dx;
+				carotid syncope_dx last_syncope_dx prev_syncope_dx 
+				neurologic_dx first_neurologic_dx;
 
 %macro alg_carotidsyn(input);
 
@@ -573,7 +601,8 @@ Denominator: Patients with reported foot pain and with plantar fasciitis diagnos
 */
 
 %let vars_radio = &vars_base lvc 
-				radiographic next_plantarfasciitis_dx last_footpain_dx ;
+				radiographic plantarfasciitis_dx next_plantarfasciitis_dx 
+				footpain_dx last_footpain_dx ;
 %macro alg_radio(input);
 
 data output.radio_sensitive(keep=&vars_radio);
@@ -584,8 +613,12 @@ if (next_plantarfasciitis_dx>. and next_plantarfasciitis_dx-clm_dt<=14) and
    (last_footpain_dx>. and clm_dt- last_footpain_dx <=14);
 run;
 
+data output.radio_specific;
+set output.radio_sensitive;
+run;
 
 %patient_level_output(output.radio_sensitive, output.radio_sensitive_patient);
+%patient_level_output(output.radio_specific, output.radio_specific_patient);
 
 %mend alg_radio;
 
@@ -599,7 +632,7 @@ Denominator: Patients with ischemic heart disease or acute myocardial infarction
 */
 
 %let vars_stress = &vars_base lvc 
-				stress emergencycare last_ischemic_dx;
+				stress emergencycare ischemic_dx last_ischemic_dx;
 
 %macro alg_stress(input);
 
@@ -609,8 +642,12 @@ lvc = stress and (emergencycare=0 and src ne "IP");
 if last_ischemic_dx>. and (clm_dt - last_ischemic_dx)>=90;
 run;
 
-%patient_level_output(output.stress_sensitive, output.stress_sensitive_patient);
+data output.stress_specific;
+set output.stress_sensitive;
+run;
 
+%patient_level_output(output.stress_sensitive, output.stress_sensitive_patient);
+%patient_level_output(output.stress_specific, output.stress_specific_patient);
 %mend alg_stress;
 
 /*
@@ -622,7 +659,7 @@ Denominator: Patients without a history of stroke or TIA, stroke or TIA, or foca
 */
 
 %let vars_endarterectomy = &vars_base lvc 
-				endarterectomy first_stroketia_dx;
+				endarterectomy stroketia_dx first_stroketia_dx;
 
 %macro alg_endarterectomy(input);
 
@@ -679,7 +716,9 @@ Denominator: Patients with chronic kidney disease and not on dialysis and no hyp
 */
 
 %let vars_pth = &vars_base lvc 
-				pth first_kidney_dx last_hypercalcemia_dx first_dialysis_betos next_dialysis_betos;
+				pth kidney_dx first_kidney_dx 
+				hypercalcemia_dx last_hypercalcemia_dx 
+				dialysis_betos first_dialysis_betos next_dialysis_betos;
 
 %macro alg_pth(input);
 
@@ -709,7 +748,8 @@ Denominator: Patients with stable coronary disease (defined as ischemic heart di
 */
 
 %let vars_pci = &vars_base lvc 
-			pci last_stablecoronary_dx last_angina_dx;
+			pci stablecoronary_dx last_stablecoronary_dx 
+			angina_dx last_angina_dx;
 
 %macro alg_pci(input);
 
@@ -769,7 +809,7 @@ Denominator: Patients without a history of or current pulmonary embolism or deep
 
 
 %let vars_ivc = &vars_base lvc 
-				ivc last_thrombosis_dx;
+				ivc thrombosis_dx last_thrombosis_dx;
 
 %macro alg_ivc(input);
 
@@ -827,7 +867,9 @@ Denominator: Patients with osteoporosis and with vertebral fractures and without
 */
 
 %let vars_verte = &vars_base lvc 
-				verte vertebralfracture_dx last_osteoporosis_dx last_bonecancer_dx;
+				verte vertebralfracture_dx 
+				osteoporosis_dx last_osteoporosis_dx 
+				bonecancer_dx last_bonecancer_dx;
 
 %macro alg_verte(input);
 
@@ -888,7 +930,9 @@ Patients with lower back pain without radiculopathy
 */
 
 %let vars_inject = &vars_base lvc 
-				inject etanercept last_lowbackpain_dx last_radiculopathy_dx;
+				inject etanercept 
+				lowbackpain_dx last_lowbackpain_dx 
+				radiculopathy_dx last_radiculopathy_dx;
 
 %macro alg_inject(input);
 
