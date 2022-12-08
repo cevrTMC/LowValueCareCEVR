@@ -3,7 +3,7 @@ Low value care algorithms
 */
 
 %let vars_base= desy_sort_key npi src bene_race_cd clm_dt DOB_DT GNDR_CD;
-%let inputdata= lvc_etl.claims_all_flag_FLPDx_nextDx;
+%let inputdata= date.sub_0_flag_first_next;
 
 proc datasets library=output kill;
 run;
@@ -35,6 +35,7 @@ run;
 
 %patient_level_output(output.psa_sensitive, output.psa_sensitive_patient);
 %patient_level_output(output.psa_specific, output.psa_specific_patient);
+
 %mend alg_psa;
 
 /********************************************************
@@ -988,5 +989,5 @@ quit;
 /*30*/%alg_knee(&inputdata);	
 /*31*/%alg_inject(&inputdata);	
 
-	
+%toStata;	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/

@@ -3,7 +3,6 @@
 Extract first, last, next service/Dx dates
 
 */
-%let outdir= C:\Users\lliang1\Documents\My SAS Files\9.4\output;
 
 Proc format lib=work.formats;
 value agefmt
@@ -76,12 +75,12 @@ run;
  */
 %macro firstLastPrevDates(input);
 *** Sort claims by ID and date of claim;
-proc sort data=&input;
+proc sort data=com.&input;
 	by desy_sort_key clm_dt;
 run;
 
-data &input._FLPDx;
-	set &input;
+data &input._first;
+	set com.&input;
 	by desy_sort_key clm_dt;
 
  	%DO i=1 %TO &Dim_Var.;
@@ -110,7 +109,7 @@ data &input._FLPDx;
  	format DOB_DT agefmt. gndr_cd $genderfmt. bene_race_cd $racefmt.;
 run;
 
-proc sort data=&input._FLPDx;
+proc sort data=&input._first;
 	by desy_sort_key clm_dt;
 run;
 
@@ -131,7 +130,7 @@ proc sort data=&input.;
  	by desy_sort_key descending clm_dt;
 run;
 
-data &input._nextDx;
+data date.&input._next;
  	set &input.;
 	by desy_sort_key descending clm_dt;
 
@@ -159,69 +158,34 @@ data &input._nextDx;
  	%end;
  run;
 
-proc sort data=&input._nextDx;
+proc sort data=date.&input._next;
 	by desy_sort_key clm_dt;
 run;
 
 %mend nextDate;
 
 
-/* list all patient ids with flag indicating whether the patient had ever received the lvc */
-%macro collapse(input, flag, output);
-proc sort data=&input. out=&output.;
-	by desy_sort_key descending &flag.;
+
+proc datasets library=date kill;
 run;
 
-data &output.(keep=desy_sort_key race num);
- 	set &output.;
- 	by desy_sort_key;
- 	num = &flag.;
- 	if first.desy_sort_key then output;
+%macro condition_date;
+ods output Members=Members;
+proc datasets library=com memtype=data;
 run;
 
-%mend collapse;
+proc sql; 
+select Name into :strings separated by " "  from Members;
+quit;
 
-/*output analytic data, tranfrom to STATA format */
-%macro patient_level_output(input,output);
+%do index=1 %to %sysfunc(countw(&strings));
+    %let input=%scan(&strings,&index,%str( ));
+	%put 'date' &input;
+	%firstLastPrevDates(&input);
+	%nextDate(&input._first); 
+	%put &input 'done';
+%end;
 
-	/*reformat race */
-	data tmp;
-		set &input.;
-		race_numeric = input(BENE_RACE_CD, 2.);
-		format race_numeric racefmt.;
-		drop BENE_RACE_CD;
-		rename race_numeric=race;
+%mend;
 
-		gender_numeric = input(gndr_cd, 2.);
-		format gender_numeric sexfmt.;
-		drop gndr_cd;
-		rename gender_numeric=gender;
-	run;
-
-	%collapse(tmp,lvc, &output.);
-
-	proc freq data=&output.;
-	table num /missing;
-	run;
-
-	PROC EXPORT DATA=tmp
-		OUTFILE="&outdir\&input..dta"			
-		DBMS=dta REPLACE;
-		fmtlib=work.formats;
-	RUN;
-
-	PROC EXPORT DATA=&output.
-		OUTFILE="&outdir\&output..dta"			
-		DBMS=dta REPLACE;
-		fmtlib=work.formats;
-	RUN;
-
-%mend patient_level_output;
-
-%firstLastPrevDates(lvc_etl.claims_all_flag);
-%nextDate(lvc_etl.claims_all_flag_FLPDx);
-
-data test(keep=desy_sort_key clm_dt low_risk_noncard next_low_risk_noncard) ;
-set lvc_etl.claims_all_flag_FLPDx_nextdx;
-run;
-
+%condition_date;

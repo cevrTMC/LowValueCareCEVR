@@ -1,7 +1,12 @@
-﻿
+﻿proc datasets library=flag kill;
+run;
+quit;
+
+
+
 %let yr_start = 2017; /* synthetic data 2008*/
 %let yr_end = 2017; /* synthetic data 2008*/
-%let ip_chunk=1;
+%let ip_chunk=1; 
 
 %let num_cd = 200;
 
@@ -300,8 +305,8 @@
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
-data lvc_etl.&clmtype._&year._&chunk._flag;
-	set lvc_etl.&clmtype._&year._&chunk.;
+data flag.&clmtype._&year._&chunk._flag;
+	set etl.&clmtype._&year._&chunk.;
 	array hcpcscd(&num_cd.) hcpcs_cd1-hcpcs_cd&num_cd.;
 	array dxcodes(25) icd_dgns_cd1-icd_dgns_cd25;
 	array betoscd(&num_cd.) betos_cd1-betos_cd&num_cd.;
@@ -425,93 +430,13 @@ data lvc_etl.&clmtype._&year._&chunk._flag;
 	fracture_vd = (fracture_vd_dx or fracture_cpt);
 	bonemd=(bonemd_cpt or dxa_dx);
 	low_risk_noncard = (low_risk_noncard_cpt or low_risk_noncard_betos);
+
 	drop i cptcode dxcode hcpcs_cd1-hcpcs_cd&num_cd. icd_dgns_cd1-icd_dgns_cd25 betos_cd1-betos_cd&num_cd.;
-run;
 
-proc freq data=lvc_etl.&clmtype._&year._&chunk._flag;
-table &conditions;
-run;
-%mend flag;
-
-
-*inpatient;
-
-%macro process_ip();
-
-	%do yr = &yr_start. %to &yr_end.;
-		%do nchunk = 1 %to &ip_chunk.;
-			%flag(clmtype=ip, year=&yr.,chunk=&nchunk.); 
-		%end;
-	%end;
-	
-	data lvc_etl.ip_flag;
-	rename clm_admsn_dt = clm_dt;
-	rename at_physn_npi = npi;
-	set 
-	%do yr = &yr_start. %to &yr_end.;
-		%do nchunk = 1 %to &ip_chunk.;
-			lvc_etl.ip_&yr._&nchunk._flag;     
-		%end;
-	%end;
-	;
-	SRC = "IP";
-	run;
-	
-%mend process_ip;
-
-%let op_chunk=1;
-
-%macro process_op();
-	%do yr = &yr_start. %to &yr_end.;
-		%do nchunk = 1 %to &op_chunk.;
-			%flag(clmtype=op, year=&yr.,chunk=&nchunk.); 
-		%end;
-	%end;
-	
-	data lvc_etl.op_flag;
-	rename clm_thru_dt = clm_dt;
-	rename at_physn_npi = npi;
-	set 
-	%do yr = &yr_start. %to &yr_end.;
-		%do nchunk = 1 %to &op_chunk.;
-			lvc_etl.op_&yr._&nchunk._flag;     
-		%end;
-	%end;
-	
-	SRC = "OP";
-	run;
-%mend process_op;
-
-%let cr_chunk=1;
-%macro process_cr();
-	%do yr = &yr_start. %to &yr_end.;
-		%do nchunk = 1 %to &cr_chunk.;
-			%flag(clmtype=cr, year=&yr.,chunk=&nchunk.); 
-		%end;
-	%end;
-	
-	data lvc_etl.cr_flag;
-	rename clm_thru_dt = clm_dt;
-	rename rfr_physn_npi = npi;
-	set 
-	%do yr = &yr_start. %to &yr_end.;
-		%do nchunk = 1 %to &cr_chunk.;
-			lvc_etl.cr_&yr._&nchunk._flag;     
-		%end;
-	%end;
-	SRC = "CR";
-	run;
-%mend process_cr;
-
-%macro combine_types();
-	data lvc_etl.claims_all_flag;
-	set lvc_etl.ip_flag 
-		lvc_etl.op_flag
-		lvc_etl.cr_flag;
 	label 
 	 psa  = 'HCPCS: PSA test'
 	 lvc  = 'flag for Low value care, 1 (Yes) 0(No)'
-	 SRC  = 'Source of claim, CR (Carrier) IP(Inpatient) OP(Outpatient)'
+	 src  = 'Source of claim, CR (Carrier) IP(Inpatient) OP(Outpatient)'
 	 prostate_dx = 'ICD: prostate cancer, elevated PSA, or family history of prostate cancer'
 	 cerv = 'HCPCS: cervical cancer screening'
 	 cerv_ex= 'ICD: High risk for cervical cancer screening' 
@@ -600,12 +525,105 @@ run;
 	 lowbackpain_dx = "ICD: lower back pain"
 	 radiculopathy_dx = "ICD: radiculopathy"
 	;
-	drop betos drg clm_drg_cd claim_no;
+run;
+
+proc freq data=flag.&clmtype._&year._&chunk._flag;
+table &conditions;
+run;
+%mend flag;
+
+
+*inpatient;
+
+%macro flag_ip();
+
+	%do yr = &yr_start. %to &yr_end.;
+		%do nchunk = 1 %to &ip_chunk.;
+			%flag(clmtype=ip, year=&yr.,chunk=&nchunk.); 
+			data flag.ip_&yr._&nchunk._flag; 
+				set flag.ip_&yr._&nchunk._flag;
+				rename clm_admsn_dt = clm_dt;
+				rename at_physn_npi = npi;	
+				src ="ip";
+			run;
+		%end;
+	%end;
+	
+	/*
+	data lvc_etl.ip_flag;
+	rename clm_admsn_dt = clm_dt;
+	rename at_physn_npi = npi;
+	set 
+	%do yr = &yr_start. %to &yr_end.;
+		%do nchunk = 1 %to &ip_chunk.;
+			lvc_etl.ip_&yr._&nchunk._flag;     
+		%end;
+	%end;
+	;
+	SRC = "IP";
 	run;
-%mend combine_types;
+	*/
+%mend flag_ip;
+
+%let op_chunk=1;
+
+%macro flag_op();
+	%do yr = &yr_start. %to &yr_end.;
+		%do nchunk = 1 %to &op_chunk.;
+			%flag(clmtype=op, year=&yr.,chunk=&nchunk.);
+			data flag.op_&yr._&nchunk._flag; 
+			set flag.op_&yr._&nchunk._flag; 
+			rename clm_thru_dt = clm_dt;
+			rename at_physn_npi = npi;
+			src = "op";
+ 			run;
+		%end;
+	%end;
+	/*
+	data lvc_etl.op_flag;
+	rename clm_thru_dt = clm_dt;
+	rename at_physn_npi = npi;
+	set 
+	%do yr = &yr_start. %to &yr_end.;
+		%do nchunk = 1 %to &op_chunk.;
+			lvc_etl.op_&yr._&nchunk._flag;     
+		%end;
+	%end;
+	
+	SRC = "OP";
+	run;
+	*/
+%mend flag_op;
+
+%let cr_chunk=1;
+%macro flag_cr();
+	%do yr = &yr_start. %to &yr_end.;
+		%do nchunk = 1 %to &cr_chunk.;
+			%flag(clmtype=cr, year=&yr.,chunk=&nchunk.); 
+			data flag.cr_&yr._&nchunk._flag;
+			set flag.cr_&yr._&nchunk._flag;
+			rename clm_thru_dt = clm_dt;
+			rename rfr_physn_npi = npi;
+			src = "cr";
+			run;
+		%end;
+	%end;
+	/*
+	data lvc_etl.cr_flag;
+	rename clm_thru_dt = clm_dt;
+	rename rfr_physn_npi = npi;
+	set 
+	%do yr = &yr_start. %to &yr_end.;
+		%do nchunk = 1 %to &cr_chunk.;
+			lvc_etl.cr_&yr._&nchunk._flag;     
+		%end;
+	%end;
+	SRC = "CR";
+	run;
+	*/
+%mend flag_cr;
 
 
-%process_op();
-%process_ip();
-%process_cr();
-%combine_types();
+%flag_op();
+%flag_ip();
+%flag_cr();
