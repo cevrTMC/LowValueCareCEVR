@@ -87,6 +87,7 @@ quit;
 						or ('74410'<=:cptcode<=:'74425')
 						or ('74150'<=:cptcode<=:'74170')
 						or ('74181'<=:cptcode<=:'74183');
+%let eleccard_cond = cptcode in ('3120F', '93000', '93005', '93010', 'G0366', 'G0367', 'G0368', 'G0403', 'G0404', 'G0405');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -244,6 +245,32 @@ quit;
 							'R109', 'R31', 'R330', 'R338', 'R3914', 'R50', 'R680', 'R6883')) or 
 							('N00'<=:dxcode<=:'N08') or
 							('N16'<=:dxcode<=:'N20');
+%let symptomatic_dx_cond = (dxcode in :('E87', 'N17', 'N186', 'N189', 'N19', 'O88', 'P74', 'Q39', 'R07', 
+							'R52', 'S02', 'S12', 'S52', 'S62', 'S72', 'S82', 'S92', 'T02', 'T08', 'T10', 
+							'T12', 'T86', 'Z482', 'Z49', 'Z94'))
+							or ('A00'<=:dxcode<=:'B99') 
+							or ('C00'<=:dxcode<=:'C97')
+							or ('D00'<=:dxcode<=:'D48')
+							or ('D50'<=:dxcode<=:'D64')
+							or ('D80'<=:dxcode<=:'D89')
+							or ('F00'<=:dxcode<=:'F99')
+							or ('I05'<=:dxcode<=:'I15')
+							or ('I20'<=:dxcode<=:'I52')
+							or ('I70'<=:dxcode<=:'I89')
+							or ('J00'<=:dxcode<=:'J99')
+							or ('K20'<=:dxcode<=:'K31')
+							or ('K40'<=:dxcode<=:'K46')
+							or ('L00'<=:dxcode<=:'L08')
+							or ('R10'<=:dxcode<=:'R19')
+							or ('S20'<=:dxcode<=:'S29')
+							or ('S30'<=:dxcode<=:'S39')
+							or ('S40'<=:dxcode<=:'S49')
+							or ('T36'<=:dxcode<=:'T65')
+							or ('W00'<=:dxcode<=:'W19')
+							or ('X40'<=:dxcode<=:'X49')
+							or ('Y10'<=:dxcode<=:'Y19')
+							or ('Y10'<=:dxcode<=:'Y19')
+;
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -314,6 +341,7 @@ quit;
 				  knee osteoarthritis_dx meniscaltear_dx
 				  inject etanercept lowbackpain_dx radiculopathy_dx
 				  uppertract bph_dx indicateimg_dx
+				  eleccard symptomatic_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -364,6 +392,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &inject_cond then inject=1;
 			if &etanercept_cond then etanercept=1;
 			if &uppertract_cond then uppertract=1;
+			if &eleccard_cond then eleccard=1;
 	  end;
 	end;
 
@@ -420,6 +449,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &radiculopathy_dx_cond then radiculopathy_dx=1;
 			if &bph_dx_cond then bph_dx=1;
 			if &indicateimg_dx_cond then indicateimg_dx=1;
+			if &symptomatic_dx_cond then symptomatic_dx=1;
 	  end;
 	end;
 	
@@ -542,6 +572,8 @@ data flag.&clmtype._&year._&chunk._flag;
 	 uppertract = "HCPCS:upper-tract imaging: intravenous pyelogram, CT scan abdomen, MRI abdomen, diagnostic ultrasound of abdomen"
 	 bph_dx = "ICD: benign prostatic hyperplasia (BPH)"
 	 indicateimg_dx = "ICD: Other indication for imaging: chronic renal failure, nephritis, nephrotic syndrome, and nephrosis, other pyelonephritis or pyonephrosis not specified as acute or chronic, calculus of kidney and ureter, kidney stones, urinary tract infections, hematuria, fever, urinary retention, abdominal pain, cancer except non-melanoma skin cancer"
+	 eleccard = "HCPCS: electrocardiogram"
+	 symptomatic_dx = "ICD: symptomatic indications"
 	;
 run;
 
