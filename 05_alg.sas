@@ -3,7 +3,7 @@ Low value care algorithms
 */
 
 %let vars_base= desy_sort_key npi src bene_race_cd clm_dt DOB_DT GNDR_CD;
-%let inputdata= date.sub_0_flag_first_next;
+%let inputdata= sub_0;
 
 proc datasets library=output kill;
 run;
@@ -21,20 +21,20 @@ Denominator: Men age 70 or older without prostate cancer, elevated PSA, or famil
 
 %macro alg_psa(input);
 /* male, age >=70 */
-data output.psa_sensitive(keep=&vars_psa);
-set &input;
+data output.&input._psa_sensitive(keep=&vars_psa);
+set date.&input;
 lvc = psa;
 if DOB_DT>=3 and GNDR_CD=1;
 run;
 
 /* no history of prostate cancer*/
-data output.psa_specific;
-set output.psa_sensitive;
+data output.&input._psa_specific;
+set output.&input._psa_sensitive;
 if first_prostate_dx=. or clm_dt < first_prostate_dx;
 run;
 
-%patient_level_output(output.psa_sensitive, output.psa_sensitive_patient);
-%patient_level_output(output.psa_specific, output.psa_specific_patient);
+%patient_level_output(output.&input._psa_sensitive, output.&input._psa_sensitive_p);
+%patient_level_output(output.&input._psa_specific, output.&input._psa_specific_p);
 
 %mend alg_psa;
 
@@ -52,20 +52,20 @@ diethylstilbestrol exposure, HIV/AIDS
 
 %macro alg_cerv(input);
 /*age 65+ , women*/
-data output.cerv_sensitive(keep=&vars_cerv);
-set &input;
+data output.&input._cerv_sensitive(keep=&vars_cerv);
+set date.&input;
 lvc = cerv;
 if DOB_DT>=2 and GNDR_CD=2; 
 run;
 
 /* not at high risk for cervical cancer */
-data output.cerv_specific;
-set output.cerv_sensitive;
+data output.&input._cerv_specific;
+set output.&input._cerv_sensitive;
 if first_cerv_ex=. or clm_dt < first_cerv_ex;
 run;
 
-%patient_level_output(output.cerv_sensitive, output.cerv_sensitive_patient);
-%patient_level_output(output.cerv_specific, output.cerv_specific_patient);
+%patient_level_output(output.&input._cerv_sensitive, output.&input._cerv_sensitive_p);
+%patient_level_output(output.&input._cerv_specific, output.&input._cerv_specific_p);
 %mend pre_cerv;
 
 
@@ -84,8 +84,8 @@ High risk indicators: chronic kidney disease, hypercalcemia, chronic conditions,
 	pregnancy_obesity_dx_date fracture_vd last_fracture_vd lvc;
 
 %macro alg_vd(input);
-data output.vd_sensitive(keep=&vars_vd);
-set &input;
+data output.&input._vd_sensitive(keep=&vars_vd);
+set date.&input;
 lvc = vitaminD_cpt;
 run;
 
@@ -93,16 +93,16 @@ run;
 no other risk factor or >90 days before test*,
 not pregnant or clm_dt != pregancy_date 
 no fracture or >365 days before test*/
-data output.vd_specific;
-set output.vd_sensitive;
+data output.&input._vd_specific;
+set output.&input._vd_sensitive;
 if (missing(first_chronic_dx) or clm_dt<first_chronic_dx) and 
 	(missing(last_other_risk_dx) or clm_dt-last_other_risk_dx>90) and 
 	(missing(last_fracture_vd) or clm_dt-last_fracture_vd>365) and 
 	(missing(pregnancy_obesity_dx_date) or clm_dt ne pregnancy_obesity_dx_date);
 run;
 
-%patient_level_output(output.vd_sensitive, output.vd_sensitive_patient);
-%patient_level_output(output.vd_specific, output.vd_specific_patient);
+%patient_level_output(output.&input._vd_sensitive, output.&input._vd_sensitive_p);
+%patient_level_output(output.&input._vd_specific, output.&input._vd_specific_p);
 %mend alg_vd;
 
 
@@ -120,20 +120,20 @@ Known Possible Causes: cancer, external injury, trauma, IV drug abuse, neurologi
 
 %macro alg_lbp(input);
 /*imglbp_inclusion_dx Within 6 weeks before service*/
-data output.lbp_sensitive(keep=&vars_lbp);
-set &input;
+data output.&input._lbp_sensitive(keep=&vars_lbp);
+set date.&input;
 lvc = imglbp;
 if last_imglbp_inc_dx>. and clm_dt-last_imglbp_inc<=42;
 run;
 
 /*imglbp_exclusion_dx not within 6 weeks before service*/
-data output.lbp_specific;
-set output.lbp_sensitive;
+data output.&input._lbp_specific;
+set output.&input._lbp_sensitive;
 if last_imglbp_exc_dx=. or clm_dt-last_imglbp_exc_dx>42;
 run;
 
-%patient_level_output(output.lbp_sensitive, output.lbp_sensitive_patient);
-%patient_level_output(output.lbp_specific, output.lbp_specific_patient);
+%patient_level_output(output.&input._lbp_sensitive, output.&input._lbp_sensitive_p);
+%patient_level_output(output.&input._lbp_specific, output.&input._lbp_specific_p);
 %mend alg_lbp;
 
 /**************************************************
@@ -148,20 +148,20 @@ Denominator: Patients age 85 or older without a history of colorectal cancer
 
 %macro alg_crc(input);
 /* age >=85 */
-data output.crc_sensitive(keep=&vars_crc);
-set &input;
+data output.&input._crc_sensitive(keep=&vars_crc);
+set date.&input;
 lvc = (crc or crc_dx);
 if DOB_DT=6;
 run;
 
 /* no crc cancer history */
-data output.crc_specific;
-set output.crc_sensitive;
+data output.&input._crc_specific;
+set output.&input._crc_sensitive;
 if first_crc_cancer_dx=. or clm_dt < first_crc_cancer_dx;
 run;
 
-%patient_level_output(output.crc_sensitive, output.crc_sensitive_patient);
-%patient_level_output(output.crc_specific, output.crc_specific_patient);
+%patient_level_output(output.&input._crc_sensitive, output.&input._crc_sensitive_p);
+%patient_level_output(output.&input._crc_specific, output.&input._crc_specific_p);
 %mend alg_crc;
 
 /**************************************************
@@ -177,18 +177,18 @@ Denominator: Patients age 75 years or older and on dialysis
 %macro alg_canscrn(input);
 
 /*age 75+ and on dialysis*/ 
-data output.canscrn_sensitive(keep=&vars_canscrn);
-set &input;
+data output.&input._canscrn_sensitive(keep=&vars_canscrn);
+set date.&input;
 lvc = (canscrn or canscrn_dx);
 if DOB_DT>=4 and (first_dialysis>. and clm_dt>=first_dialysis); 
 run;
 
-data output.canscrn_specific;
-set output.canscrn_sensitive;
+data output.&input._canscrn_specific;
+set output.&input._canscrn_sensitive;
 run;
 
-%patient_level_output(output.canscrn_sensitive, output.canscrn_sensitive_patient);
-%patient_level_output(output.canscrn_specific, output.canscrn_specific_patient);
+%patient_level_output(output.&input._canscrn_sensitive, output.&input._canscrn_sensitive_p);
+%patient_level_output(output.&input._canscrn_specific, output.&input._canscrn_specific_p);
 
 %mend alg_canscrn;
 
@@ -208,22 +208,22 @@ Denominator: Patients with osteoporosis and without cancer or a fragility fractu
 
 %macro alg_bonemd(input);
 
-data output.bonemd_sensitive(keep=&vars_bonemd);
-set &input;
+data output.&input._bonemd_sensitive(keep=&vars_bonemd);
+set date.&input;
 lvc=0;
 if (bonemd=1 and (prev_bonemd>. and clm_dt-prev_bonemd<=730)) then lvc=1; /*LVC if within 2 years of a previous test*/
 if first_osteoporosis_dx>. and clm_dt>=first_osteoporosis_dx; /*with osteoporosis*/ 
 run;
 
 /* no cancer patients, no fracture within 2 years of service*/
-data output.bonemd_specific;
-set output.bonemd_sensitive;
+data output.&input._bonemd_specific;
+set output.&input._bonemd_sensitive;
 if (first_cancer_dx=. or clm_dt<first_cancer_dx) and 
  (last_fracture=. or clm_dt - last_fracture>730); 
 run;
 
-%patient_level_output(output.bonemd_sensitive, output.bonemd_sensitive_patient);
-%patient_level_output(output.bonemd_specific, output.bonemd_specific_patient);
+%patient_level_output(output.&input._bonemd_sensitive, output.&input._bonemd_sensitive_p);
+%patient_level_output(output.&input._bonemd_specific, output.&input._bonemd_specific_p);
 %mend alg_bonemd;
 
 /**************************************************
@@ -238,19 +238,19 @@ denominator: Patients with pulmonary embolism or venous embolism with thrombosis
 				embolism_dx first_embolism_dx last_embolism_dx lvc;
 
 %macro alg_hypercoagula(input);
-data output.hypercoagula_sensitive(keep=&vars_hypercoagula);
-set &input;
+data output.&input._hypercoagula_sensitive(keep=&vars_hypercoagula);
+set date.&input;
 lvc=0;
 if hypercoagula=1 and clm_dt-last_embolism_dx<=90 then lvc = 1;
 if first_embolism_dx>.; /*Patients with pulmonary embolism  */ 
 run;
 
-data output.hypercoagula_specific;
-set output.hypercoagula_sensitive;
+data output.&input._hypercoagula_specific;
+set output.&input._hypercoagula_sensitive;
 run;
 
-%patient_level_output(output.hypercoagula_sensitive, output.hypercoagula_sensitive_patient);
-%patient_level_output(output.hypercoagula_specific, output.hypercoagula_specific_patient);
+%patient_level_output(output.&input._hypercoagula_sensitive, output.&input._hypercoagula_sensitive_p);
+%patient_level_output(output.&input._hypercoagula_specific, output.&input._hypercoagula_specific_p);
 %mend alg_hypercoagula;
 
 /**************************************************
@@ -265,19 +265,19 @@ denominator: Patients with hypothyroidism
 %let vars_t3= &vars_base hypothyroidism_dx first_hypothyroidism_dx last_hypothyroidism_dx lvc;
 
 %macro alg_t3(input);
-data output.t3_sensitive(keep=&vars_t3);
-set &input;
+data output.&input._t3_sensitive(keep=&vars_t3);
+set date.&input;
 lvc=0;
 if t3=1 and clm_dt-last_hypothyroidism_dx<=365 then lvc = 1;
 if first_hypothyroidism_dx>.; /*Patients with hypothyroidism */ 
 run;
 
-data output.t3_specific;
-set output.t3_sensitive;
+data output.&input._t3_specific;
+set output.&input._t3_sensitive;
 run;
 
-%patient_level_output(output.t3_sensitive, output.t3_sensitive_patient);
-%patient_level_output(output.t3_specific, output.t3_specific_patient);
+%patient_level_output(output.&input._t3_sensitive, output.&input._t3_sensitive_p);
+%patient_level_output(output.&input._t3_specific, output.&input._t3_specific_p);
 %mend alg_t3;
 
 
@@ -295,21 +295,21 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 
 %macro alg_xray(input);
 
-data output.xray_sensitive(keep=&vars_xray);
-set &input;
+data output.&input._xray_sensitive(keep=&vars_xray);
+set date.&input;
 lvc=0;
 if xray=1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
 if first_low_risk_noncard>. or next_low_risk_noncard>.; 
 run;
 
 /* not emergency care, not inpatient*/
-data output.xray_specific;
-set output.xray_sensitive;
+data output.&input._xray_specific;
+set output.&input._xray_sensitive;
 if emergencycare=0 and (src in ('OP','CR'));
 run;
 
-%patient_level_output(output.xray_sensitive, output.xray_sensitive_patient);
-%patient_level_output(output.xray_specific, output.xray_specific_patient);
+%patient_level_output(output.&input._xray_sensitive, output.&input._xray_sensitive_p);
+%patient_level_output(output.&input._xray_specific, output.&input._xray_specific_p);
 
 %mend alg_xray;
 
@@ -327,21 +327,21 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 
 %macro alg_echo(input);
 
-data output.echo_sensitive(keep=&vars_echo);
-set &input;
+data output.&input._echo_sensitive(keep=&vars_echo);
+set date.&input;
 lvc=0;
 if echocardiogram =1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
 if first_low_risk_noncard>. or next_low_risk_noncard>.; 
 run;
 
 /* no cancer patients, no fracture within 2 years of service*/
-data output.echo_specific;
-set output.echo_sensitive;
+data output.&input._echo_specific;
+set output.&input._echo_sensitive;
 if emergencycare=0 and (src in ('OP','CR'));;
 run;
 
-%patient_level_output(output.echo_sensitive, output.echo_sensitive_patient);
-%patient_level_output(output.echo_specific, output.echo_specific_patient);
+%patient_level_output(output.&input._echo_sensitive, output.&input._echo_sensitive_p);
+%patient_level_output(output.&input._echo_specific, output.&input._echo_specific_p);
 
 %mend alg_echo;
 
@@ -358,21 +358,21 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 	next_low_risk_noncard low_risk_noncard first_low_risk_noncard;
 
 %macro alg_pft(input);
-data output.pft_sensitive(keep=&vars_pft);
-set &input;
+data output.&input._pft_sensitive(keep=&vars_pft);
+set date.&input;
 lvc=0;
 if pulmonary =1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
 if first_low_risk_noncard>. or next_low_risk_noncard>.; 
 run;
 
 /* no cancer patients, no fracture within 2 years of service*/
-data output.pft_specific;
-set output.pft_sensitive;
+data output.&input._pft_specific;
+set output.&input._pft_sensitive;
 if emergencycare=0 and (src ne 'IP');
 run;
 
-%patient_level_output(output.pft_sensitive, output.pft_sensitive_patient);
-%patient_level_output(output.pft_specific, output.pft_specific_patient);
+%patient_level_output(output.&input._pft_sensitive, output.&input._pft_sensitive_p);
+%patient_level_output(output.&input._pft_specific, output.&input._pft_specific_p);
 
 %mend alg_pft;
 
@@ -389,21 +389,21 @@ Denominator: Patients undergoing low or intermediate risk non-cardiothoracic sur
 
 %macro alg_eenc(input);
 
-data output.eenc_sensitive(keep=&vars_eenc);
-set &input;
+data output.&input._eenc_sensitive(keep=&vars_eenc);
+set date.&input;
 lvc=0;
 if eenc =1 and (next_low_risk_noncard>. and next_low_risk_noncard-clm_dt<=30) then lvc=1;
 if first_low_risk_noncard>. or next_low_risk_noncard>.;  
 run;
 
 /* no cancer patients, no fracture within 2 years of service*/
-data output.eenc_specific;
-set output.eenc_sensitive;
+data output.&input._eenc_specific;
+set output.&input._eenc_sensitive;
 if emergencycare=0 and (src ne 'IP');;
 run;
 
-%patient_level_output(output.eenc_sensitive, output.eenc_sensitive_patient);
-%patient_level_output(output.eenc_specific, output.eenc_specific_patient);
+%patient_level_output(output.&input._eenc_sensitive, output.&input._eenc_sensitive_p);
+%patient_level_output(output.&input._eenc_specific, output.&input._eenc_specific_p);
 %mend alg_eenc;
 
 
@@ -421,22 +421,22 @@ Other related complications: complications of sinusitis, immune deficiencies, na
 
 %macro alg_mfct(input);
 
-data output.mfct_sensitive(keep=&vars_mfct);
-set &input;
+data output.&input._mfct_sensitive(keep=&vars_mfct);
+set date.&input;
 lvc=0;
 if maxillofacialCT=1 then lvc=1;
 if sinusitis_dx=1; 
 run;
 
-data output.mfct_specific;
-set output.mfct_sensitive;
+data output.&input._mfct_specific;
+set output.&input._mfct_sensitive;
 /*no other complication and Prior sinusitis diagnosis not within 30 to 365 days before CT*/
 if other_related_comp_dx=0 and 
 (not (last_sinusitis_dx>. and 30<=(clm_dt - last_sinusitis_dx)<=365)); 
 run;
 
-%patient_level_output(output.mfct_sensitive, output.mfct_sensitive_patient);
-%patient_level_output(output.mfct_specific, output.mfct_specific_patient);
+%patient_level_output(output.&input._mfct_sensitive, output.&input._mfct_sensitive_p);
+%patient_level_output(output.&input._mfct_specific, output.&input._mfct_specific_p);
 
 %mend alg_mfct;
 
@@ -455,19 +455,19 @@ Diagnoses for warranted imaging: epilepsy or convulsions, cerebrovacular disease
 
 %macro alg_headimg(input);
 
-data output.headimg_sensitive(keep=&vars_headimg);
-set &input;
+data output.&input._headimg_sensitive(keep=&vars_headimg);
+set date.&input;
 lvc=headimg;
 if syncope_dx=1;	
 run;
 
-data output.headimg_specific;
-set output.headimg_sensitive;
+data output.&input._headimg_specific;
+set output.&input._headimg_sensitive;
 if warranted_img_dx=0;
 run;
 
-%patient_level_output(output.headimg_sensitive, output.headimg_sensitive_patient);
-%patient_level_output(output.headimg_specific, output.headimg_specific_patient);
+%patient_level_output(output.&input._headimg_sensitive, output.&input._headimg_sensitive_p);
+%patient_level_output(output.&input._headimg_specific, output.&input._headimg_specific_p);
 
 %mend alg_headimg;
 
@@ -485,19 +485,19 @@ Patients with headache and no other diagnosis for warranted imaging. Diagnoses f
 
 %macro alg_headimg2(input);
 
-data output.headimg2_sensitive(keep=&vars_headimg2);
-set &input;
+data output.&input._headimg2_sensitive(keep=&vars_headimg2);
+set date.&input;
 lvc=headimg;
 if headache_dx=1;	
 run;
 
-data output.headimg2_specific;
-set output.headimg2_sensitive;
+data output.&input._headimg2_specific;
+set output.&input._headimg2_sensitive;
 if warranted_img2_dx=0;
 run;
 
-%patient_level_output(output.headimg2_sensitive, output.headimg2_sensitive_patient);
-%patient_level_output(output.headimg2_specific, output.headimg2_specific_patient);
+%patient_level_output(output.&input._headimg2_sensitive, output.&input._headimg2_sensitive_p);
+%patient_level_output(output.&input._headimg2_specific, output.&input._headimg2_specific_p);
 
 %mend alg_headimg2;
 
@@ -515,20 +515,20 @@ Denominator:Patients with headaches and no indication of epilepsy or convulsions
 
 %macro alg_eeg(input);
 
-data output.eeg_sensitive(keep=&vars_eeg);
-set &input;
+data output.&input._eeg_sensitive(keep=&vars_eeg);
+set date.&input;
 lvc=eeg;
 if eeg_headache_dx=1;	
 run;
 
-data output.eeg_specific;
-set output.eeg_sensitive;
+data output.&input._eeg_specific;
+set output.&input._eeg_sensitive;
 if (last_eeg_headache_dx=. or clm_dt-last_eeg_headache_dx >730) and
 	(last_epilepsy_dx=. or clm_dt-last_epilepsy_dx > 365);
 run;
 
-%patient_level_output(output.eeg_sensitive, output.eeg_sensitive_patient);
-%patient_level_output(output.eeg_specific, output.eeg_specific_patient);
+%patient_level_output(output.&input._eeg_sensitive, output.&input._eeg_sensitive_p);
+%patient_level_output(output.&input._eeg_specific, output.&input._eeg_specific_p);
 
 %mend alg_eeg;
 
@@ -545,18 +545,18 @@ Denominator: NONE ?? Should we check history or just time in the same claim??
 
 %macro alg_carotid(input);
 
-data output.carotid_sensitive(keep=&vars_carotid);
-set &input;
+data output.&input._carotid_sensitive(keep=&vars_carotid);
+set date.&input;
 lvc=carotid and (src ne 'IP') and emergencycare=0;
 run;
 
-data output.carotid_specific;
-set output.carotid_sensitive;
+data output.&input._carotid_specific;
+set output.&input._carotid_sensitive;
 if stroke_etc_dx=0;
 run;
 
-%patient_level_output(output.carotid_sensitive, output.carotid_sensitive_patient);
-%patient_level_output(output.carotid_specific, output.carotid_specific_patient);
+%patient_level_output(output.&input._carotid_sensitive, output.&input._carotid_sensitive_p);
+%patient_level_output(output.&input._carotid_specific, output.&input._carotid_specific_p);
 
 %mend alg_carotid;
 
@@ -576,19 +576,19 @@ Other neurologic symptoms: without stroke or TIA, history of stroke or TIA, reti
 
 %macro alg_carotidsyn(input);
 
-data output.carotidsyn_sensitive(keep=&vars_carotidsyn);
-set &input;
+data output.&input._carotidsyn_sensitive(keep=&vars_carotidsyn);
+set date.&input;
 lvc = carotid;
 if last_syncope_dx>. and clm_dt-last_syncope_dx<=14;
 run;
 
-data output.carotidsyn_specific;
-set output.carotidsyn_sensitive;
+data output.&input._carotidsyn_specific;
+set output.&input._carotidsyn_sensitive;
 if first_neurologic_dx=.; 
 run;
 
-%patient_level_output(output.carotidsyn_sensitive, output.carotidsyn_sensitive_patient);
-%patient_level_output(output.carotidsyn_specific, output.carotidsyn_specific_patient);
+%patient_level_output(output.&input._carotidsyn_sensitive, output.&input._carotidsyn_sensitive_p);
+%patient_level_output(output.&input._carotidsyn_specific, output.&input._carotidsyn_specific_p);
 
 %mend alg_carotidsyn;
 
@@ -606,20 +606,20 @@ Denominator: Patients with reported foot pain and with plantar fasciitis diagnos
 				footpain_dx last_footpain_dx ;
 %macro alg_radio(input);
 
-data output.radio_sensitive(keep=&vars_radio);
-set &input;
+data output.&input._radio_sensitive(keep=&vars_radio);
+set date.&input;
 lvc = radiographic;
 
 if (next_plantarfasciitis_dx>. and next_plantarfasciitis_dx-clm_dt<=14) and
    (last_footpain_dx>. and clm_dt- last_footpain_dx <=14);
 run;
 
-data output.radio_specific;
-set output.radio_sensitive;
+data output.&input._radio_specific;
+set output.&input._radio_sensitive;
 run;
 
-%patient_level_output(output.radio_sensitive, output.radio_sensitive_patient);
-%patient_level_output(output.radio_specific, output.radio_specific_patient);
+%patient_level_output(output.&input._radio_sensitive, output.&input._radio_sensitive_p);
+%patient_level_output(output.&input._radio_specific, output.&input._radio_specific_p);
 
 %mend alg_radio;
 
@@ -637,18 +637,18 @@ Denominator: Patients with ischemic heart disease or acute myocardial infarction
 
 %macro alg_stress(input);
 
-data output.stress_sensitive(keep=&vars_stress);
-set &input;
+data output.&input._stress_sensitive(keep=&vars_stress);
+set date.&input;
 lvc = stress and (emergencycare=0 and src ne "IP");
 if last_ischemic_dx>. and (clm_dt - last_ischemic_dx)>=90;
 run;
 
-data output.stress_specific;
-set output.stress_sensitive;
+data output.&input._stress_specific;
+set output.&input._stress_sensitive;
 run;
 
-%patient_level_output(output.stress_sensitive, output.stress_sensitive_patient);
-%patient_level_output(output.stress_specific, output.stress_specific_patient);
+%patient_level_output(output.&input._stress_sensitive, output.&input._stress_sensitive_p);
+%patient_level_output(output.&input._stress_specific, output.&input._stress_specific_p);
 %mend alg_stress;
 
 /*
@@ -664,18 +664,18 @@ Denominator: Patients without a history of stroke or TIA, stroke or TIA, or foca
 
 %macro alg_endarterectomy(input);
 
-data output.endarterectomy_sensitive(keep=&vars_endarterectomy);
-set &input;
+data output.&input._endarterectomy_sensitive(keep=&vars_endarterectomy);
+set date.&input;
 lvc = endarterectomy;
 run;
 
-data output.endarterectomy_specific;
-set output.endarterectomy_sensitive;
+data output.&input._endarterectomy_specific;
+set output.&input._endarterectomy_sensitive;
 if first_stroketia_dx = . ;
 run;
 
-%patient_level_output(output.endarterectomy_sensitive, output.endarterectomy_sensitive_patient);
-%patient_level_output(output.endarterectomy_specific, output.endarterectomy_specific_patient);
+%patient_level_output(output.&input._endarterectomy_sensitive, output.&input._endarterectomy_sensitive_p);
+%patient_level_output(output.&input._endarterectomy_specific, output.&input._endarterectomy_specific_p);
 
 %mend alg_endarterectomy;
 
@@ -692,18 +692,18 @@ Denominator: Patients without a diagnosis of folate or B12 deficiencies
 
 %macro alg_homocysteine(input);
 
-data output.homocysteine_sensitive(keep=&vars_homocysteine);
-set &input;
+data output.&input._homocysteine_sensitive(keep=&vars_homocysteine);
+set date.&input;
 lvc = homocysteine;
 run;
 
-data output.homocysteine_specific;
-set output.homocysteine_sensitive;
+data output.&input._homocysteine_specific;
+set output.&input._homocysteine_sensitive;
 if folate_dx=0;
 run;
 
-%patient_level_output(output.homocysteine_sensitive, output.homocysteine_sensitive_patient);
-%patient_level_output(output.homocysteine_specific, output.homocysteine_specific_patient);
+%patient_level_output(output.&input._homocysteine_sensitive, output.&input._homocysteine_sensitive_p);
+%patient_level_output(output.&input._homocysteine_specific, output.&input._homocysteine_specific_p);
 
 %mend alg_homocysteine;
 
@@ -723,20 +723,20 @@ Denominator: Patients with chronic kidney disease and not on dialysis and no hyp
 
 %macro alg_pth(input);
 
-data output.pth_sensitive(keep=&vars_pth);
-set &input;
+data output.&input._pth_sensitive(keep=&vars_pth);
+set date.&input;
 lvc = pth;
 if first_kidney_dx>.;
 run;
 
-data output.pth_specific;
-set output.pth_sensitive;
+data output.&input._pth_specific;
+set output.&input._pth_sensitive;
 if (not (last_hypercalcemia_dx>. and clm_dt-last_hypercalcemia_dx<=365)) and 
    (not (first_dialysis_betos>. or (next_dialysis_betos>. and next_dialysis_betos-clm_dt<=30)));
 run;
 
-%patient_level_output(output.pth_sensitive, output.pth_sensitive_patient);
-%patient_level_output(output.pth_specific, output.pth_specific_patient);
+%patient_level_output(output.&input._pth_sensitive, output.&input._pth_sensitive_p);
+%patient_level_output(output.&input._pth_specific, output.&input._pth_specific_p);
 
 %mend alg_pth;
 
@@ -754,19 +754,19 @@ Denominator: Patients with stable coronary disease (defined as ischemic heart di
 
 %macro alg_pci(input);
 
-data output.pci_sensitive(keep=&vars_pci);
-set &input;
+data output.&input._pci_sensitive(keep=&vars_pci);
+set date.&input;
 lvc = pci;
 if last_stablecoronary_dx>. and clm_dt-last_stablecoronary_dx>180;
 run;
 
-data output.pci_specific;
-set output.pci_sensitive;
+data output.&input._pci_specific;
+set output.&input._pci_sensitive;
 if not (last_angina_dx>. and clm_dt - last_angina_dx <=14);
 run;
 
-%patient_level_output(output.pci_sensitive, output.pci_sensitive_patient);
-%patient_level_output(output.pci_specific, output.pci_specific_patient);
+%patient_level_output(output.&input._pci_sensitive, output.&input._pci_sensitive_p);
+%patient_level_output(output.&input._pci_specific, output.&input._pci_specific_p);
 
 %mend alg_pci;
 
@@ -784,19 +784,19 @@ Denominator: Patients with a diagnosis of renal atherosclerosis or renovascular 
 
 %macro alg_angioplasty(input);
 
-data output.angioplasty_sensitive(keep=&vars_angioplasty);
-set &input;
+data output.&input._angioplasty_sensitive(keep=&vars_angioplasty);
+set date.&input;
 lvc = angioplasty;
 if atherosclerosis_dx=1;
 run;
 
-data output.angioplasty_specific;
-set output.angioplasty_sensitive;
+data output.&input._angioplasty_specific;
+set output.&input._angioplasty_sensitive;
 if fibromuscular_dx=0;
 run;
 
-%patient_level_output(output.angioplasty_sensitive, output.angioplasty_sensitive_patient);
-%patient_level_output(output.angioplasty_specific, output.angioplasty_specific_patient);
+%patient_level_output(output.&input._angioplasty_sensitive, output.&input._angioplasty_sensitive_p);
+%patient_level_output(output.&input._angioplasty_specific, output.&input._angioplasty_specific_p);
 
 %mend alg_angioplasty;
 
@@ -814,18 +814,18 @@ Denominator: Patients without a history of or current pulmonary embolism or deep
 
 %macro alg_ivc(input);
 
-data output.ivc_sensitive(keep=&vars_ivc);
-set &input;
+data output.&input._ivc_sensitive(keep=&vars_ivc);
+set date.&input;
 lvc = ivc;
 run;
 
-data output.ivc_specific;
-set output.ivc_sensitive;
+data output.&input._ivc_specific;
+set output.&input._ivc_sensitive;
 if not (last_thrombosis_dx>. and clm_dt - last_thrombosis_dx <=365);
 run;
 
-%patient_level_output(output.ivc_sensitive, output.ivc_sensitive_patient);
-%patient_level_output(output.ivc_specific, output.ivc_specific_patient);
+%patient_level_output(output.&input._ivc_sensitive, output.&input._ivc_sensitive_p);
+%patient_level_output(output.&input._ivc_specific, output.&input._ivc_specific_p);
 
 %mend alg_ivc;
 
@@ -843,19 +843,19 @@ Denominator:Patients who were hospitalized (inpatient) without a surgical MS-DRG
 
 %macro alg_cathe(input);
 
-data output.cathe_sensitive(keep=&vars_cathe);
-set &input;
+data output.&input._cathe_sensitive(keep=&vars_cathe);
+set date.&input;
 lvc = catheterization;
 if src ='IP';
 run;
 
-data output.cathe_specific;
-set output.cathe_sensitive;
+data output.&input._cathe_specific;
+set output.&input._cathe_sensitive;
 if pulmonaryhypertension_dx=0 and surgical_drg=0;
 run;
 
-%patient_level_output(output.cathe_sensitive, output.cathe_sensitive_patient);
-%patient_level_output(output.cathe_specific, output.cathe_specific_patient);
+%patient_level_output(output.&input._cathe_sensitive, output.&input._cathe_sensitive_p);
+%patient_level_output(output.&input._cathe_specific, output.&input._cathe_specific_p);
 
 %mend alg_cathe;
 
@@ -874,20 +874,20 @@ Denominator: Patients with osteoporosis and with vertebral fractures and without
 
 %macro alg_verte(input);
 
-data output.verte_sensitive(keep=&vars_verte);
-set &input;
+data output.&input._verte_sensitive(keep=&vars_verte);
+set date.&input;
 lvc = verte;
 if vertebralfracture_dx=1 and 
    (last_osteoporosis_dx>. and clm_dt-last_osteoporosis_dx<= 365);
 run;
 
-data output.verte_specific;
-set output.verte_sensitive;
+data output.&input._verte_specific;
+set output.&input._verte_sensitive;
 if not (last_bonecancer_dx>. and clm_dt-last_bonecancer_dx<=365);
 run;
 
-%patient_level_output(output.verte_sensitive, output.verte_sensitive_patient);
-%patient_level_output(output.verte_specific, output.verte_specific_patient);
+%patient_level_output(output.&input._verte_sensitive, output.&input._verte_sensitive_p);
+%patient_level_output(output.&input._verte_specific, output.&input._verte_specific_p);
 
 %mend alg_verte;
 
@@ -905,19 +905,19 @@ Patients with diagnosis of osteoarthritis or chondromalacia and without meniscal
 
 %macro alg_knee(input);
 
-data output.knee_sensitive(keep=&vars_knee);
-set &input;
+data output.&input._knee_sensitive(keep=&vars_knee);
+set date.&input;
 lvc = knee;
 if osteoarthritis_dx=1;
 run;
 
-data output.knee_specific;
-set output.knee_sensitive;
+data output.&input._knee_specific;
+set output.&input._knee_sensitive;
 if meniscaltear_dx=0;
 run;
 
-%patient_level_output(output.knee_sensitive, output.knee_sensitive_patient);
-%patient_level_output(output.knee_specific, output.knee_specific_patient);
+%patient_level_output(output.&input._knee_sensitive, output.&input._knee_sensitive_p);
+%patient_level_output(output.&input._knee_specific, output.&input._knee_specific_p);
 
 %mend alg_knee;
 
@@ -937,19 +937,19 @@ Patients with lower back pain without radiculopathy
 
 %macro alg_inject(input);
 
-data output.inject_sensitive(keep=&vars_inject);
-set &input;
+data output.&input._inject_sensitive(keep=&vars_inject);
+set date.&input;
 lvc = inject and (not etanercept) and (src ne "IP");
 if (last_lowbackpain_dx>. and clm_dt-last_lowbackpain_dx<=14);
 run;
 
-data output.inject_specific;
-set output.inject_sensitive;
+data output.&input._inject_specific;
+set output.&input._inject_sensitive;
 if not ((src = "IP") or (last_radiculopathy_dx>. and clm_dt-last_radiculopathy_dx<=14));
 run;
 
-%patient_level_output(output.inject_sensitive, output.inject_sensitive_patient);
-%patient_level_output(output.inject_specific, output.inject_specific_patient);
+%patient_level_output(output.&input._inject_sensitive, output.&input._inject_sensitive_p);
+%patient_level_output(output.&input._inject_specific, output.&input._inject_specific_p);
 
 %mend alg_inject;
 

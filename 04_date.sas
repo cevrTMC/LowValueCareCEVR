@@ -125,12 +125,14 @@ run;
   next procedure date is applicable only for the claims that that had that procedure.
  */
 %macro nextDate(input);
+
+%let sub_id = %substr(&input, 1, %length(&input)-11);
 *** Sort claims by ID and date of claim;
 proc sort data=&input.;
  	by desy_sort_key descending clm_dt;
 run;
 
-data date.&input._next;
+data &input._next;
  	set &input.;
 	by desy_sort_key descending clm_dt;
 
@@ -158,7 +160,7 @@ data date.&input._next;
  	%end;
  run;
 
-proc sort data=date.&input._next;
+proc sort data=&input._next out=date.&sub_id;
 	by desy_sort_key clm_dt;
 run;
 
