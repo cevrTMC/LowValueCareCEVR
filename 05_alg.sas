@@ -953,6 +953,36 @@ run;
 
 %mend alg_inject;
 
+
+/*
+algoirthm 32: Do not perform upper tract imaging in patients with benign prostatic hyperplasia (BPH) without another indication for imaging
+denominator: Patients with benign prostatic hyperplasia (BPH) and without another indication for imaging
+Other indication for imaging: chronic renal failure, nephritis, nephrotic syndrome, and nephrosis, other pyelonephritis or pyonephrosis not specified as acute or chronic, calculus of kidney and ureter, kidney stones, urinary tract infections, hematuria, fever, urinary retention, abdominal pain, cancer except non-melanoma skin cancer
+*/
+
+%let vars_tract = &vars_base lvc 
+				   uppertract bph_dx indicateimg_dx;
+
+%macro alg_tract(input);
+
+data output.&input._tract_sensitive(keep=&vars_tract);
+set date.&input;
+lvc = uppertract;
+if bph_dx=1;
+run;
+
+data output.&input._tract_specific;
+set output.&input._tract_sensitive;
+if not (indicateimg_dx=1);
+run;
+
+%patient_level_output(output.&input._tract_sensitive, output.&input._tract_sensitive_p);
+%patient_level_output(output.&input._tract_specific, output.&input._tract_specific_p);
+
+%mend alg_tract;
+
+
+
 proc datasets library=output kill;
 run;
 quit;
@@ -988,6 +1018,6 @@ quit;
 /*29*/%alg_verte(&inputdata);	
 /*30*/%alg_knee(&inputdata);	
 /*31*/%alg_inject(&inputdata);	
-
+/*32*/%alg_tract(&inputdata)
 %toStata;	
 /*%listdir("C:\Users\lliang1\Documents\My SAS Files\9.4\output");*/

@@ -83,6 +83,10 @@ quit;
 %let knee_cond = cptcode in ('29877', '29879', '29880', '29881', 'G0289');
 %let inject_cond = cptcode in ('62311', '64483', '20552', '20553', '64493', '64475');
 %let etanercept_cond = cptcode in ('J1438');
+%let uppertract_cond = (cptcode in ('74400', '74405', '76700', '76705', '76770', '76775'))
+						or ('74410'<=:cptcode<=:'74425')
+						or ('74150'<=:cptcode<=:'74170')
+						or ('74181'<=:cptcode<=:'74183');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -233,6 +237,13 @@ quit;
 										'M9953', 'M9963', 'M9973', 'M9983', 'M9984', 'Q762', 'S335', 'S336', 
 										'S338', 'S339');
 %let radiculopathy_dx_cond = dxcode in :('M4716', 'M5106', 'M519', 'M5414', 'M5415', 'M5416', 'M5417', 'M543', 'M544');
+%let bph_dx_cond = dxcode in :('N3941', 'N400', 'N401', 'R32', 'R339', 'R350', 'R351', 'R3912', 'R3914');
+%let indicateimg_dx_cond = (dxcode in :('B520', 'E082', 'E092', 'I120', 'M3214', 'M3215', 'M3504', 
+							'N119', 'N12', 'N132', 'N136', 'N139', 'N14', 'N150', 'N158', 'N159', 
+							'N22', 'N25', 'N261', 'N269', 'N27', 'N390', 'R100', 'R101', 'R102', 'R103', 'R1084', 
+							'R109', 'R31', 'R330', 'R338', 'R3914', 'R50', 'R680', 'R6883')) or 
+							('N00'<=:dxcode<=:'N08') or
+							('N16'<=:dxcode<=:'N20');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -302,6 +313,7 @@ quit;
 				  verte vertebralfracture_dx bonecancer_dx
 				  knee osteoarthritis_dx meniscaltear_dx
 				  inject etanercept lowbackpain_dx radiculopathy_dx
+				  uppertract bph_dx indicateimg_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -351,6 +363,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &knee_cond then knee=1;
 			if &inject_cond then inject=1;
 			if &etanercept_cond then etanercept=1;
+			if &uppertract_cond then uppertract=1;
 	  end;
 	end;
 
@@ -405,6 +418,8 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &meniscaltear_dx_cond then meniscaltear_dx=1;
 			if &lowbackpain_dx_cond then lowbackpain_dx=1;
 			if &radiculopathy_dx_cond then radiculopathy_dx=1;
+			if &bph_dx_cond then bph_dx=1;
+			if &indicateimg_dx_cond then indicateimg_dx=1;
 	  end;
 	end;
 	
@@ -524,6 +539,9 @@ data flag.&clmtype._&year._&chunk._flag;
 	 etanercept = "HCPCS: etanercept injection"
 	 lowbackpain_dx = "ICD: lower back pain"
 	 radiculopathy_dx = "ICD: radiculopathy"
+	 uppertract = "HCPCS:upper-tract imaging: intravenous pyelogram, CT scan abdomen, MRI abdomen, diagnostic ultrasound of abdomen"
+	 bph_dx = "ICD: benign prostatic hyperplasia (BPH)"
+	 indicateimg_dx = "ICD: Other indication for imaging: chronic renal failure, nephritis, nephrotic syndrome, and nephrosis, other pyelonephritis or pyonephrosis not specified as acute or chronic, calculus of kidney and ureter, kidney stones, urinary tract infections, hematuria, fever, urinary retention, abdominal pain, cancer except non-melanoma skin cancer"
 	;
 run;
 
