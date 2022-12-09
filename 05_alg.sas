@@ -1007,3 +1007,51 @@ run;
 
 %mend alg_eleccard;
 
+/*
+algorithm 34: Do not perform cardiovascular stress test on low-risk, asymptomatic patients
+denominator: Patients that have no high risk indications, high risk drug prescriptions or symptomatic indications 
+*/
+
+%let vars_cardistress = &vars_base lvc 
+				   cardistress symptomatic_cs_dx;
+
+%macro alg_cardistress(input);
+
+data output.&input._cardistress_sensitive(keep=&vars_cardistress);
+set date.&input;
+lvc = cardistress;
+run;
+
+data output.&input._cardistress_specific;
+set output.&input._cardistress_sensitive;
+if not (symptomatic_cs_dx=1);
+run;
+
+%patient_level_output(output.&input._cardistress_sensitive, output.&input._cardistress_sensitive_p);
+%patient_level_output(output.&input._cardistress_specific, output.&input._cardistress_specific_p);
+
+%mend alg_cardistress;
+
+/*
+algorithm35: Do not perform echocardiogram on low-risk, asymptomatic patients
+*/
+
+%let vars_echocard = &vars_base lvc 
+				   echocard symptomatic_35_dx;
+
+%macro alg_echocard(input);
+
+data output.&input._echocard_sensitive(keep=&vars_echocard);
+set date.&input;
+lvc = echocard;
+run;
+
+data output.&input._echocard_specific;
+set output.&input._echocard_sensitive;
+if not (symtomatic_35_dx=1);
+run;
+
+%patient_level_output(output.&input._echocard_sensitive, output.&input._echocard_sensitive_p);
+%patient_level_output(output.&input._echocard_specific, output.&input._echocard_specific_p);
+
+%mend alg_echocard;

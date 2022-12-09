@@ -88,6 +88,9 @@ quit;
 						or ('74150'<=:cptcode<=:'74170')
 						or ('74181'<=:cptcode<=:'74183');
 %let eleccard_cond = cptcode in ('3120F', '93000', '93005', '93010', 'G0366', 'G0367', 'G0368', 'G0403', 'G0404', 'G0405');
+%let cardistress_cond = cptcode in ('75560', '75563', '75564', '93015', '93016', '93017', '93018', '93024', '93350', '93351', '93352');
+%let echocard_cond = cptcode in ('93303', '93304', '93306', '93307', '93308', '93320', '93321', '93325');
+
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -245,7 +248,7 @@ quit;
 							'R109', 'R31', 'R330', 'R338', 'R3914', 'R50', 'R680', 'R6883')) or 
 							('N00'<=:dxcode<=:'N08') or
 							('N16'<=:dxcode<=:'N20');
-%let symptomatic_dx_cond = (dxcode in :('E87', 'N17', 'N186', 'N189', 'N19', 'O88', 'P74', 'Q39', 'R07', 
+%let symptomatic_dx_cond = (dxcode in :('N17', 'N186', 'N189', 'N19', 'O88', 'P74', 'Q39', 'R07', 
 							'R52', 'S02', 'S12', 'S52', 'S62', 'S72', 'S82', 'S92', 'T02', 'T08', 'T10', 
 							'T12', 'T86', 'Z482', 'Z49', 'Z94'))
 							or ('A00'<=:dxcode<=:'B99') 
@@ -269,6 +272,46 @@ quit;
 							or ('W00'<=:dxcode<=:'W19')
 							or ('X40'<=:dxcode<=:'X49')
 							or ('Y10'<=:dxcode<=:'Y19')
+							or ('Y10'<=:dxcode<=:'Y19');
+%let symptomatic_cs_dx_cond = (dxcode in :('G40','G41','G45','G46','G47','R10','R53'))
+							or ('C00'<=:dxcode<=:'C97')
+							or ('D00'<=:dxcode<=:'D48')
+							or ('G00'<=:dxcode<=:'G13')
+							or ('G35'<=:dxcode<=:'G37')
+							or ('D00'<=:dxcode<=:'D48')
+							or ('G90'<=:dxcode<=:'G99')
+							or ('I05'<=:dxcode<=:'I15')
+							or ('I20'<=:dxcode<=:'I52')
+							or ('I70'<=:dxcode<=:'I79')
+							or ('I95'<=:dxcode<=:'I99')
+							or ('J40'<=:dxcode<=:'J47')
+							or ('J60'<=:dxcode<=:'J70')
+							or ('J80'<=:dxcode<=:'J86')
+							or ('J90'<=:dxcode<=:'J99')
+							or ('N10'<=:dxcode<=:'N19')
+							or ('T36'<=:dxcode<=:'T65')
+							or ('X40'<=:dxcode<=:'X57')
+							or ('Y10'<=:dxcode<=:'Y19');
+%let symptomatic_35_dx_cond = (dxcode in :('E87','G40','G45','G46','K20','N17','N186','N189'
+							'N19','O88','P74','Q39','R07','R52','S02','S12','S52','S62','S72'
+							'S82','S92','T02','T08','T10','T12','T86','Z482','Z49','Z94'))
+							or ('A00'<=:dxcode<=:'B99') 
+							or ('C00'<=:dxcode<=:'C97')
+							or ('D00'<=:dxcode<=:'D64')
+							or ('D80'<=:dxcode<=:'D89')
+							or ('F05'<=:dxcode<=:'F99')
+							or ('I05'<=:dxcode<=:'I15')
+							or ('I20'<=:dxcode<=:'I52')
+							or ('I70'<=:dxcode<=:'I99')
+							or ('J00'<=:dxcode<=:'J99')
+							or ('K23'<=:dxcode<=:'K31')
+							or ('K40'<=:dxcode<=:'K46')
+							or ('L00'<=:dxcode<=:'L08')
+							or ('R10'<=:dxcode<=:'R19')
+							or ('S20'<=:dxcode<=:'S49')
+							or ('T36'<=:dxcode<=:'T65')
+							or ('W00'<=:dxcode<=:'W19')
+							or ('X40'<=:dxcode<=:'X49')
 							or ('Y10'<=:dxcode<=:'Y19')
 ;
 
@@ -342,6 +385,8 @@ quit;
 				  inject etanercept lowbackpain_dx radiculopathy_dx
 				  uppertract bph_dx indicateimg_dx
 				  eleccard symptomatic_dx
+				  cardistress symptomatic_cs_dx
+				  echocard symptomatic_35_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -393,6 +438,8 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &etanercept_cond then etanercept=1;
 			if &uppertract_cond then uppertract=1;
 			if &eleccard_cond then eleccard=1;
+			if &cardistress_cond then cardistress=1;
+			if &echocard_cond then echocard=1;
 	  end;
 	end;
 
@@ -450,6 +497,8 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &bph_dx_cond then bph_dx=1;
 			if &indicateimg_dx_cond then indicateimg_dx=1;
 			if &symptomatic_dx_cond then symptomatic_dx=1;
+			if &symptomatic_cs_dx_cond then symptomatic_cs_dx=1;
+			if &symptomatic_35_dx_cond then symptomatic_35_dx=1;
 	  end;
 	end;
 	
@@ -574,6 +623,10 @@ data flag.&clmtype._&year._&chunk._flag;
 	 indicateimg_dx = "ICD: Other indication for imaging: chronic renal failure, nephritis, nephrotic syndrome, and nephrosis, other pyelonephritis or pyonephrosis not specified as acute or chronic, calculus of kidney and ureter, kidney stones, urinary tract infections, hematuria, fever, urinary retention, abdominal pain, cancer except non-melanoma skin cancer"
 	 eleccard = "HCPCS: electrocardiogram"
 	 symptomatic_dx = "ICD: symptomatic indications"
+	 cardistress = "HCPCS: cardiovascular stress test"
+	 symptomatic_cs_dx = "ICD: symptomatic indications for cardiovascular stress test"
+	 echocard = "HCPCS: echocardiogram"
+	 symptomatic_35_dx ="ICD: sympptomatic indications for alg 35"
 	;
 run;
 
