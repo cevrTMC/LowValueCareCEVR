@@ -1055,3 +1055,27 @@ run;
 %patient_level_output(output.&input._echocard_specific, output.&input._echocard_specific_p);
 
 %mend alg_echocard;
+
+/*
+algorithm 36: Do not perform advanced imaging (CT, MRI, PET) on low-risk, asymptomatic patients
+*/
+
+%let vars_advimg = &vars_base lvc 
+				   advimg symptomatic_36_dx;
+
+%macro alg_advimg(input);
+
+data output.&input._advimg_sensitive(keep=&vars_advimg);
+set date.&input;
+lvc = advimg;
+run;
+
+data output.&input._advimg_specific;
+set output.&input._advimg_sensitive;
+if not (symtomatic_36_dx=1);
+run;
+
+%patient_level_output(output.&input._advimg_sensitive, output.&input._advimg_sensitive_p);
+%patient_level_output(output.&input._advimg_specific, output.&input._advimg_specific_p);
+
+%mend alg_advimg;

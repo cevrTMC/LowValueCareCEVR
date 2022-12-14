@@ -90,7 +90,11 @@ quit;
 %let eleccard_cond = cptcode in ('3120F', '93000', '93005', '93010', 'G0366', 'G0367', 'G0368', 'G0403', 'G0404', 'G0405');
 %let cardistress_cond = cptcode in ('75560', '75563', '75564', '93015', '93016', '93017', '93018', '93024', '93350', '93351', '93352');
 %let echocard_cond = cptcode in ('93303', '93304', '93306', '93307', '93308', '93320', '93321', '93325');
-
+%let advimg_cond = cptcode in ('0144T', '0145T', '0146T', '0147T', '0148T', '0149T', '0150T', '75552', '75553',
+								'75554', '75555', '75556', '75557', '75558', '75559', '75561', '75562', '75565', 
+								'75571', '75572', '75573', '75574', '78451', '78452', '78453', '78454', '78460', 
+								'78461', '78464', '78465', '78478', '78480', '78459', '78481', '78483', '78491', 
+								'78492', '78494', '78496', '78499');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -312,8 +316,25 @@ quit;
 							or ('T36'<=:dxcode<=:'T65')
 							or ('W00'<=:dxcode<=:'W19')
 							or ('X40'<=:dxcode<=:'X49')
-							or ('Y10'<=:dxcode<=:'Y19')
-;
+							or ('Y10'<=:dxcode<=:'Y19');
+%let symptomatic_36_dx_cond = (dxcode in :('G40','G41','G45','G46','G47','R10','R53')) 
+							or ('C00'<=:dxcode<=:'C97')
+							or ('D00'<=:dxcode<=:'D48')
+							or ('G00'<=:dxcode<=:'G13')
+							or ('G35'<=:dxcode<=:'G37')
+							or ('G90'<=:dxcode<=:'G99')
+							or ('I05'<=:dxcode<=:'I15')
+							or ('I20'<=:dxcode<=:'I52')
+							or ('I70'<=:dxcode<=:'I79')
+							or ('I95'<=:dxcode<=:'I99')
+							or ('J40'<=:dxcode<=:'J47')
+							or ('J60'<=:dxcode<=:'J70')
+							or ('J80'<=:dxcode<=:'J86')
+							or ('J90'<=:dxcode<=:'J99')
+							or ('N10'<=:dxcode<=:'N19')
+							or ('T36'<=:dxcode<=:'T65')
+							or ('X40'<=:dxcode<=:'X57')
+							or ('Y10'<=:dxcode<=:'Y19');
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -387,6 +408,7 @@ quit;
 				  eleccard symptomatic_dx
 				  cardistress symptomatic_cs_dx
 				  echocard symptomatic_35_dx
+				  advimg symptomatic_36_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -440,6 +462,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &eleccard_cond then eleccard=1;
 			if &cardistress_cond then cardistress=1;
 			if &echocard_cond then echocard=1;
+			if &advimg_cond then advimg=1;
 	  end;
 	end;
 
@@ -499,6 +522,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &symptomatic_dx_cond then symptomatic_dx=1;
 			if &symptomatic_cs_dx_cond then symptomatic_cs_dx=1;
 			if &symptomatic_35_dx_cond then symptomatic_35_dx=1;
+			if &symptomatic_36_dx_cond then symptomatic_36_dx=1;
 	  end;
 	end;
 	
@@ -627,6 +651,8 @@ data flag.&clmtype._&year._&chunk._flag;
 	 symptomatic_cs_dx = "ICD: symptomatic indications for cardiovascular stress test"
 	 echocard = "HCPCS: echocardiogram"
 	 symptomatic_35_dx ="ICD: sympptomatic indications for alg 35"
+	 advimg = "HCPCS:advanced imaging (CT, MRI, PET)"
+	 symptomatic_36_dx="ICD:sympptomatic indications for alg 36"
 	;
 run;
 
