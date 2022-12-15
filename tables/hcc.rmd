@@ -1,0 +1,7 @@
+---
+output: github_document
+---
+
+# Hierarchical Condition Categories (HCC)
+
+To create HCC, this program follows [CMS HCC definition]([https://www.cms.gov/files/document/hhs-hcc-software-v0417-127-m2-descriptionpdf).](https://www.cms.gov/files/document/hhs-hcc-software-v0417-127-m2-descriptionpdf)

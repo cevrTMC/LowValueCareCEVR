@@ -64,6 +64,10 @@ Scan whole history of claims of each patient, then create time variables
 for some conditions, including first condition date, last condition
 date, previous condition date, next condition date.
 
+### 5.1 Create HCC (to be implemented)
+
+[about HCC](tables/hcc.md)
+
 ### 6. Label Low-Value-Care
 
 SAS code: **05\_alg.sas**
