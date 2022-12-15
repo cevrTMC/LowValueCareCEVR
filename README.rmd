@@ -39,11 +39,11 @@ Scan HCPCS/ICD-10/BETOS/DRG codes from inpatient/outpatient/carrier claims for 8
 
 Here is [list of conditions](tables/flag.md)
 
-### 4. Split-Combine flag files by ID-group
+### 4. Regroup patients
 
-SAS code: **03_split_combine.sas**
+SAS code: **03_group.sas**
 
-Each patient_id is mapped to a id_group based on last two digits of id. Split each flag file by id_group, then combine flag files that belong to the same id_group.
+Each patient_id is mapped to a group_id based on last two digits of patient_id. Split each flag file by group_id, then combine all split-ed flag files by group_id.
 
 ### 5. Create time variables
 

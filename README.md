@@ -48,13 +48,13 @@ conditions, 2 BETOS conditions and 1 DRG condition.
 
 Here is [list of conditions](tables/flag.md)
 
-### 4. Split-Combine flag files by ID-group
+### 4. Regroup patients
 
-SAS code: **03\_split\_combine.sas**
+SAS code: **03\_group.sas**
 
-Each patient\_id is mapped to a id\_group based on last two digits of
-id. Split each flag file by id\_group, then combine flag files that
-belong to the same id\_group.
+Each patient\_id is mapped to a group\_id based on last two digits of
+patient\_id. Split each flag file by group\_id, then combine all
+split-ed flag files by group\_id.
 
 ### 5. Create time variables
 
