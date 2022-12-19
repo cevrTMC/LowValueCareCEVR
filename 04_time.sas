@@ -117,8 +117,9 @@ run;
 
 %let next_conditions low_risk_noncard 
 					 plantarfasciitis_dx
-					 dialysis_betos;
-%Let Dim_nextVar = 3;
+					 dialysis_betos
+					 cataract_betos;
+%Let Dim_nextVar = 4;
 
 /*This SAS macro create varibles for the next date of each of 3 
   conditions, which will be used in some low-value-care algorithms. 
@@ -190,4 +191,3 @@ quit;
 
 %mend;
 
-%condition_date;

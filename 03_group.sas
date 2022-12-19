@@ -73,6 +73,4 @@ run;
 
 %mend;
 
-%split_all();
-%combine_all();
 

@@ -335,11 +335,34 @@ quit;
 							or ('T36'<=:dxcode<=:'T65')
 							or ('X40'<=:dxcode<=:'X57')
 							or ('Y10'<=:dxcode<=:'Y19');
+%let diagnosis_42_dx_cond = (dxcode in :('E87', 'G40', 'G45', 'G46', 'K20', 'N17', 'N186', 'N189', 
+							'N19', 'O88', 'P74', 'Q39', 'R07', 'R52', 'S02', 'S12', 'S52', 'S62', 
+							'S72', 'S82', 'S92', 'T02', 'T08', 'T10', 'T12', 'T86', 'Z482', 'Z49', 'Z94')) 
+							or ('A00'<=:dxcode<=:'B99')
+							or ('C00'<=:dxcode<=:'C97')
+							or ('D00'<=:dxcode<=:'D64')
+							or ('D80'<=:dxcode<=:'D89')
+							or ('F05'<=:dxcode<=:'F99')
+							or ('I05'<=:dxcode<=:'I15')
+							or ('I20'<=:dxcode<=:'I52')
+							or ('I70'<=:dxcode<=:'I79')
+							or ('J00'<=:dxcode<=:'J99')
+							or ('K23'<=:dxcode<=:'K31')
+							or ('K40'<=:dxcode<=:'K46')
+							or ('L00'<=:dxcode<=:'L08')
+							or ('R10'<=:dxcode<=:'R19')
+							or ('S20'<=:dxcode<=:'S49')
+							or ('T36'<=:dxcode<=:'T65')
+							or ('W00'<=:dxcode<=:'W19')
+							or ('X40'<=:dxcode<=:'X49')
+							or ('Y10'<=:dxcode<=:'Y19')
+;
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
 %let low_risk_noncard_betos_cond = betos in : ('P1','P3D', 'P4A', 'P4B', 'P4C', 'P5C', 'P5D', 
 							'P8A', 'P8G');
+%let cataract_betos_cond = betos in :('P4B');
 
 /* DRG conditions */
 %let surgical_drg_cond = (drg in :( '010','876')) or 
@@ -409,6 +432,7 @@ quit;
 				  cardistress symptomatic_cs_dx
 				  echocard symptomatic_35_dx
 				  advimg symptomatic_36_dx
+				  cataract_betos diagnosis_42_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -523,6 +547,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &symptomatic_cs_dx_cond then symptomatic_cs_dx=1;
 			if &symptomatic_35_dx_cond then symptomatic_35_dx=1;
 			if &symptomatic_36_dx_cond then symptomatic_36_dx=1;
+			if &diagnosis_42_dx_cond then diagnosis_42_dx=1;
 	  end;
 	end;
 	
@@ -533,6 +558,7 @@ data flag.&clmtype._&year._&chunk._flag;
 		  		betos = upcase(betoscd(i));
 				if &dialysis_betos_cond then dialysis_betos=1;
 				if &low_risk_noncard_betos_cond then low_risk_noncard_betos=1;
+				if &cataract_betos_cond then cataract_betos=1;
 		  end;
 		end;
 	
@@ -653,6 +679,8 @@ data flag.&clmtype._&year._&chunk._flag;
 	 symptomatic_35_dx ="ICD: sympptomatic indications for alg 35"
 	 advimg = "HCPCS:advanced imaging (CT, MRI, PET)"
 	 symptomatic_36_dx="ICD:sympptomatic indications for alg 36"
+	 cataract_betos = "BETOS: Cataract surgery: P4B"
+	 diagnosis_42_dx = "ICD: Other warranted diagnosis for alg 42"
 	;
 run;
 

@@ -1079,3 +1079,44 @@ run;
 %patient_level_output(output.&input._advimg_specific, output.&input._advimg_specific_p);
 
 %mend alg_advimg;
+
+/*
+algorithm37: Do not prescribe antipsychotics as first choice to treat behavioral and psychological symptoms of dementia
+
+need drug code. 
+*/
+
+
+/*
+algorithm 38: Do not use percutaneous feeding tubes in patients with advanced dementia
+ICD-10-PCS code ?
+*/
+
+/*
+algorithm39:Do not prescribe opioids or butalbital treatment for migraine except as a last resort
+drug code?
+*/
+
+/*
+algorithm 40: Do not perform electrocardiogram not associated with a warranted diagnosis and occurring within 30 days prior to cataract surgery
+*/
+
+%let vars_echocard40 = &vars_base lvc 
+				   electrocardiogram cataract_betos next_cataract_betos diagnosis_42_dx;
+
+%macro alg_electrocardiogram(input);
+
+data output.&input._echocard40_sensitive(keep=&vars_electrocardiogram);
+set date.&input;
+lvc = electrocardiogram and (cataract_betos_next - clm_dt<=30);
+run;
+
+data output.&input._echocard40_specific;
+set output.&input._echocard40_sensitive;
+if not (diagnosis_42_dx=1);
+run;
+
+%patient_level_output(output.&input._echocard40_sensitive, output.&input._echocard40_sensitive_p);
+%patient_level_output(output.&input._echocard40_specific, output.&input._echocard40_specific_p);
+
+%mend alg_electrocardiogram;
