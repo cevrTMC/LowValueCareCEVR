@@ -7,10 +7,8 @@ libname flag 'C:\Users\lliang1\Documents\My SAS Files\9.4\flag';
 libname sub 'C:\Users\lliang1\Documents\My SAS Files\9.4\sub';
 libname com 'C:\Users\lliang1\Documents\My SAS Files\9.4\com';
 libname date 'C:\Users\lliang1\Documents\My SAS Files\9.4\date';
+libname hcc 'C:\Users\lliang1\Documents\My SAS Files\9.4\hcc';
 libname stata 'C:\Users\lliang1\Documents\My SAS Files\9.4\stata';
-
-
-
 
 
 proc datasets library=etl kill;

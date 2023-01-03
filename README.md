@@ -64,14 +64,19 @@ Scan whole history of claims of each patient, then create time variables
 for some conditions, including first condition date, last condition
 date, previous condition date, next condition date.
 
-### 5.1 Create HCC (to be implemented)
+### 6. Create HCC
+
+SAS code: **05\_hcc.sas**
+
+For each patient, scan whole history of ICD-10s, then create 204 HCC
+flags.
 
 [about HCC](tables/hcc.md)
 
-### 6. Label Low-Value-Care
+### 7. Label Low-Value-Care
 
-SAS code: **05\_alg.sas**
+SAS code: **06\_alg.sas**
 
-Label low-value-care based on various LVC definitions(algorithms).
+Label low-value-care based on LVC definitions(algorithms).
 
 Here is [list of algorithms](tables/alg.md)

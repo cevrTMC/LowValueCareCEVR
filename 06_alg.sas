@@ -1010,21 +1010,37 @@ run;
 /*
 algorithm 34: Do not perform cardiovascular stress test on low-risk, asymptomatic patients
 denominator: Patients that have no high risk indications, high risk drug prescriptions or symptomatic indications 
+
+HCC: 1, 7-10, 15-19, 52, 79, 80, 81, 82, 83, 92, 96, 100, 104, 105, 108, 113
 */
 
+%let num_hcc = 204;
+%let highrisk_cond = hcc_flag in (1,7,8,9,10,15,16,17,18,19,
+					52, 79, 80, 81, 82, 83, 92, 96, 100, 104, 105, 108, 113);
+
 %let vars_cardistress = &vars_base lvc 
-				   cardistress symptomatic_cs_dx;
+				   cardistress symptomatic_cs_dx highrisk;
 
 %macro alg_cardistress(input);
 
 data output.&input._cardistress_sensitive(keep=&vars_cardistress);
-set date.&input;
-lvc = cardistress;
+set hcc.&input.;
+	array hcccd(204) HCC1-HCC204; 
+	lvc = cardistress;
+	highrisk=0;
+
+	do i=1 to dim(hcccd);
+	  	if not missing(hcccd(i)) then do;
+	  		hcc_flag = hcccd(i);
+			if &highrisk_cond then highrisk=1;
+		end;
+	end;
+	
 run;
 
 data output.&input._cardistress_specific;
 set output.&input._cardistress_sensitive;
-if not (symptomatic_cs_dx=1);
+if not((symptomatic_cs_dx=1) or (highrisk=1)) ;
 run;
 
 %patient_level_output(output.&input._cardistress_sensitive, output.&input._cardistress_sensitive_p);
@@ -1032,23 +1048,34 @@ run;
 
 %mend alg_cardistress;
 
+
 /*
 algorithm35: Do not perform echocardiogram on low-risk, asymptomatic patients
 */
 
 %let vars_echocard = &vars_base lvc 
-				   echocard symptomatic_35_dx;
+				   echocard symptomatic_35_dx highrisk;
 
 %macro alg_echocard(input);
 
 data output.&input._echocard_sensitive(keep=&vars_echocard);
-set date.&input;
-lvc = echocard;
+set hcc.&input;
+	array hcccd(204) HCC1-HCC204; 
+
+	lvc = echocard;
+	highrisk=0;
+
+	do i=1 to dim(hcccd);
+	  	if not missing(hcccd(i)) then do;
+	  		hcc_flag = hcccd(i);
+			if &highrisk_cond then highrisk=1;
+		end;
+	end;
 run;
 
 data output.&input._echocard_specific;
 set output.&input._echocard_sensitive;
-if not (symtomatic_35_dx=1);
+if not((symtomatic_35_dx=1) or (highrisk=1));
 run;
 
 %patient_level_output(output.&input._echocard_sensitive, output.&input._echocard_sensitive_p);
@@ -1056,23 +1083,34 @@ run;
 
 %mend alg_echocard;
 
+
 /*
 algorithm 36: Do not perform advanced imaging (CT, MRI, PET) on low-risk, asymptomatic patients
 */
 
 %let vars_advimg = &vars_base lvc 
-				   advimg symptomatic_36_dx;
+				   advimg symptomatic_36_dx highrisk;
 
 %macro alg_advimg(input);
 
 data output.&input._advimg_sensitive(keep=&vars_advimg);
-set date.&input;
-lvc = advimg;
+set hcc.&input;
+	array hcccd(204) HCC1-HCC204; 
+
+	lvc = advimg;
+	highrisk=0;
+
+	do i=1 to dim(hcccd);
+	  	if not missing(hcccd(i)) then do;
+	  		hcc_flag = hcccd(i);
+			if &highrisk_cond then highrisk=1;
+		end;
+	end;
 run;
 
 data output.&input._advimg_specific;
 set output.&input._advimg_sensitive;
-if not (symtomatic_36_dx=1);
+if not ((symtomatic_36_dx=1) or (highrisk=1));
 run;
 
 %patient_level_output(output.&input._advimg_sensitive, output.&input._advimg_sensitive_p);
@@ -1104,9 +1142,9 @@ algorithm 40: Do not perform electrocardiogram not associated with a warranted d
 %let vars_echocard40 = &vars_base lvc 
 				   electrocardiogram cataract_betos next_cataract_betos diagnosis_42_dx;
 
-%macro alg_electrocardiogram(input);
+%macro alg_echocard40(input);
 
-data output.&input._echocard40_sensitive(keep=&vars_electrocardiogram);
+data output.&input._echocard40_sensitive(keep=&vars_echocard40);
 set date.&input;
 lvc = electrocardiogram and (cataract_betos_next - clm_dt<=30);
 run;
@@ -1120,3 +1158,100 @@ run;
 %patient_level_output(output.&input._echocard40_specific, output.&input._echocard40_specific_p);
 
 %mend alg_electrocardiogram;
+
+/*
+algorithm41: Do not perform cardiac stress test not associated with a warranted diagnosis and occurring within 30 days prior to cataract surgery
+*/
+
+%let vars_cardistress41 = &vars_base lvc 
+				   cardistress cataract_betos cataract_betos_next diagnosis_41_dx;
+
+%macro alg_cardistress41(input);
+
+data output.&input._cardistress41_sensitive(keep=&vars_cardistress41);
+set date.&input;
+lvc = cardistress and (cataract_betos_next - clm_dt<=30);
+run;
+
+data output.&input._cardistress41_specific;
+set output.&input._cardistress41_sensitive;
+if not (diagnosis_41_dx=1);
+run;
+
+%patient_level_output(output.&input._cardistress41_sensitive, output.&input._cardistress41_sensitive_p);
+%patient_level_output(output.&input._cardistress41_specific, output.&input._cardistress41_specific_p);
+
+%mend alg_cardistress;
+
+/*
+algorithm42: Do not perform echocardiogram not associated with a warranted diagnosis and occurring within 30 days prior to cataract surgery
+*/
+%let vars_echocard42 = &vars_base lvc 
+				   echocard cataract_betos cataract_betos_next diagnosis_42_dx;
+
+
+%macro alg_echocard42(input);
+
+data output.&input._echocard42_sensitive(keep=&vars_echocard42);
+set date.&input;
+lvc = echocard and (cataract_betos_next - clm_dt<=30);
+run;
+
+data output.&input._echocard42_specific;
+set output.&input._echocard42_sensitive;
+if not (diagnosis_42_dx=1);
+run;
+
+%patient_level_output(output.&input._echocard42_sensitive, output.&input._echocard42_sensitive_p);
+%patient_level_output(output.&input._echocard42_specific, output.&input._echocard42_specific_p);
+
+%mend alg_echocard42;
+
+/*
+algorithm43: Do not perform chest x-ray not associated with a warranted diagnosis and occurring within 30 days prior to cataract surgery
+*/
+%let vars_xray43 = &vars_base lvc 
+				   xray43 cataract_betos cataract_betos_next diagnosis_43_dx;
+
+
+%macro alg_xray43(input);
+
+data output.&input._xray43_sensitive(keep=&vars_xray43);
+set date.&input;
+lvc = xray43 and (cataract_betos_next - clm_dt<=30);
+run;
+
+data output.&input._xray43_specific;
+set output.&input._xray43_sensitive;
+if not (diagnosis_43_dx=1);
+run;
+
+%patient_level_output(output.&input._xray43_sensitive, output.&input._xray43_sensitive_p);
+%patient_level_output(output.&input._xray43_specific, output.&input._xray43_specific_p);
+
+%mend alg_xray43;
+
+
+/*
+algorithm44: Do not perform advanced cardiac imaging not associated with a warranted diagnosis and occurring within 30 days prior to cataract surgery
+*/
+%let vars_advimg44 = &vars_base lvc 
+				   advimg cataract_betos cataract_betos_next diagnosis_41_dx;
+
+
+%macro alg_advimg44(input);
+
+data output.&input._advimg44_sensitive(keep=&vars_advimg44);
+set date.&input;
+lvc = advimg and (cataract_betos_next - clm_dt<=30);
+run;
+
+data output.&input._advimg44_specific;
+set output.&input._advimg44_sensitive;
+if not (diagnosis_41_dx=1);
+run;
+
+%patient_level_output(output.&input._advimg44_sensitive, output.&input._advimg44_sensitive_p);
+%patient_level_output(output.&input._advimg44_specific, output.&input._advimg44_specific_p);
+
+%mend alg_advimg44;

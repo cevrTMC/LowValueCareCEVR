@@ -95,6 +95,7 @@ quit;
 								'75571', '75572', '75573', '75574', '78451', '78452', '78453', '78454', '78460', 
 								'78461', '78464', '78465', '78478', '78480', '78459', '78481', '78483', '78491', 
 								'78492', '78494', '78496', '78499');
+%let xray43_cond = cptcode in ('71010', '71015','71020', '71021','71022','71030', '71035') ;
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -355,8 +356,58 @@ quit;
 							or ('T36'<=:dxcode<=:'T65')
 							or ('W00'<=:dxcode<=:'W19')
 							or ('X40'<=:dxcode<=:'X49')
-							or ('Y10'<=:dxcode<=:'Y19')
+							or ('Y10'<=:dxcode<=:'Y19');
+%let diagnosis_41_dx_cond = (dxcode in :('G40','G41','G45','G46','G47','R10','R53')) 
+							or ('C00'<=:dxcode<=:'C97')
+							or ('D00'<=:dxcode<=:'D48')
+							or ('G00'<=:dxcode<=:'G13')
+							or ('G35'<=:dxcode<=:'G37')
+							or ('G90'<=:dxcode<=:'G99')
+							or ('I05'<=:dxcode<=:'I15')
+							or ('I20'<=:dxcode<=:'I52')
+							or ('I70'<=:dxcode<=:'I79')
+							or ('I95'<=:dxcode<=:'I99')
+							or ('J40'<=:dxcode<=:'J47')
+							or ('J60'<=:dxcode<=:'J70')
+							or ('J80'<=:dxcode<=:'J86')
+							or ('J90'<=:dxcode<=:'J99')
+							or ('N10'<=:dxcode<=:'N19')
+							or ('T36'<=:dxcode<=:'T65')
+							or ('X40'<=:dxcode<=:'X57')
+							or ('Y10'<=:dxcode<=:'Y19');
+%let diagnosis_43_dx_cond = (dxcode in :('A01', 'A25', 'A38', 'A68', 'D780', 'D782', 'E360', 
+							'E8981', 'H0523', 'H113', 'H313', 'H356', 'H431', 'H4702', 'H591',
+							'H593', 'H952', 'H954','I690', 'I691', 'I692', 'I85', 'N17', 'N183', 'N184', 
+							'N185', 'N186', 'N189', 'N19', 'Q39', 'Q67', 'Q76', 'Q77', 'R07', 'R50', 'R53', 
+							'R63', 'R64', 'Z49', 'Z5181')) 
+							or ('A75'<=:dxcode<=:'A79')
+							or ('A90'<=:dxcode<=:'A99')
+							or ('C00'<=:dxcode<=:'C97')
+							or ('D00'<=:dxcode<=:'D48')
+							or ('G00'<=:dxcode<=:'G13')
+							or ('G35'<=:dxcode<=:'G47')
+							or ('G90'<=:dxcode<=:'G99')
+							or ('I00'<=:dxcode<=:'I09')
+							or ('I20'<=:dxcode<=:'I52')
+							or ('I60'<=:dxcode<=:'I62')
+							or ('I70'<=:dxcode<=:'I79')
+							or ('I95'<=:dxcode<=:'I99')
+							or ('J00'<=:dxcode<=:'J06')
+							or ('J10'<=:dxcode<=:'J47')
+							or ('J60'<=:dxcode<=:'J70')
+							or ('J80'<=:dxcode<=:'J90')
+							or ('K20'<=:dxcode<=:'K31')
+							or ('K40'<=:dxcode<=:'K46')
+							or ('R10'<=:dxcode<=:'R19')
+							or ('S00'<=:dxcode<=:'S99')
+							or ('T00'<=:dxcode<=:'T14')
+							or ('T20'<=:dxcode<=:'T25')
+							or ('T51'<=:dxcode<=:'T65')
+							or ('V01'<=:dxcode<=:'V99')
+							or ('W00'<=:dxcode<=:'W36')
 ;
+
+
 
 /* betos conditions */
 %let dialysis_betos_cond = betos in :('P9A','P9B'); /* BETOS */
@@ -433,6 +484,8 @@ quit;
 				  echocard symptomatic_35_dx
 				  advimg symptomatic_36_dx
 				  cataract_betos diagnosis_42_dx
+				  diagnosis_41_dx
+				  xray43 diagnosis_43_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
@@ -487,6 +540,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &cardistress_cond then cardistress=1;
 			if &echocard_cond then echocard=1;
 			if &advimg_cond then advimg=1;
+			if &xray43_cond then xray43=1;
 	  end;
 	end;
 
@@ -548,6 +602,8 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &symptomatic_35_dx_cond then symptomatic_35_dx=1;
 			if &symptomatic_36_dx_cond then symptomatic_36_dx=1;
 			if &diagnosis_42_dx_cond then diagnosis_42_dx=1;
+			if &diagnosis_41_dx_cond then diagnosis_41_dx=1;
+			if &diagnosis_43_dx_cond then diagnosis_43_dx=1;
 	  end;
 	end;
 	
@@ -575,7 +631,7 @@ data flag.&clmtype._&year._&chunk._flag;
 	bonemd=(bonemd_cpt or dxa_dx);
 	low_risk_noncard = (low_risk_noncard_cpt or low_risk_noncard_betos);
 
-	drop i cptcode dxcode hcpcs_cd1-hcpcs_cd&num_cd. icd_dgns_cd1-icd_dgns_cd25 betos_cd1-betos_cd&num_cd.;
+	drop i cptcode dxcode hcpcs_cd1-hcpcs_cd&num_cd. betos_cd1-betos_cd&num_cd.;
 
 	label 
 	 psa  = 'HCPCS: PSA test'
@@ -681,6 +737,9 @@ data flag.&clmtype._&year._&chunk._flag;
 	 symptomatic_36_dx="ICD:sympptomatic indications for alg 36"
 	 cataract_betos = "BETOS: Cataract surgery: P4B"
 	 diagnosis_42_dx = "ICD: Other warranted diagnosis for alg 42"
+	 diagnosis_41_dx = "ICD: Other warranted diagnosis for alg 41"
+	 xray43 = "HCPCS: chest x-ray for alg 43"
+	 diagnosis_43_dx = "ICD: Other warranted diagnosis for alg 43"
 	;
 run;
 
