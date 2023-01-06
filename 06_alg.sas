@@ -1127,8 +1127,31 @@ need drug code.
 
 /*
 algorithm 38: Do not use percutaneous feeding tubes in patients with advanced dementia
-ICD-10-PCS code ?
+
 */
+%let vars_tube = &vars_base lvc 
+				 tube_pcs tube dementia_dx first_dementia_dx prev_dementia_dx dem_2more; 
+
+%macro alg_tube(input);
+
+data output.&input._tube_sensitive(keep=&vars_tube);
+set date.&input;
+dem_2more = (first_dementia_dx>.) and (prev_dementia_dx>.) and (prev_dementia_dx > first_dementia_dx);
+lvc = (tube_pcs or tube) and (dem_2more);
+run;
+
+data output.&input._tube_specific;
+set output.&input._tube_sensitive;
+run;
+
+%patient_level_output(output.&input._tube_sensitive, output.&input._tube_sensitive_p);
+%patient_level_output(output.&input._tube_specific, output.&input._tube_specific_p);
+
+%mend alg_tube;
+
+
+
+
 
 /*
 algorithm39:Do not prescribe opioids or butalbital treatment for migraine except as a last resort

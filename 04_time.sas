@@ -67,8 +67,9 @@ run;
 					thrombosis_dx 
 					bonecancer_dx
 					lowbackpain_dx radiculopathy_dx
+					dementia_dx
 					;
-%Let Dim_Var = 35;
+%Let Dim_Var = 36;
 
 /*This SAS macro create varibles for the earliest date, the last date, and the previous date of each of 35 
   conditions, which will be used in low-value-care algorithms. 

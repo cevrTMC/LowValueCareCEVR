@@ -57,6 +57,7 @@ quit;
 /*34*/%alg_cardistress(&inputdata);
 /*35*/%alg_echocard(&inputdata);
 /*36*/%alg_advimg(&inputdata);
+/*38*/%alg_tube(&inputdata);
 /*40*/%alg_echocard40(&inputdata);
 /*41*/%alg_cardistress41(&inputdata);
 /*42*/%alg_echocard42(&inputdata);

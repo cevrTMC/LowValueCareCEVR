@@ -17,7 +17,8 @@ quit;
 
 %macro etl_lds_ip(year=, chunk=);
 	%let ipvars = DESY_SORT_KEY claim_no clm_admsn_dt at_physn_npi bene_race_cd dob_dt gndr_cd
-	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25 CLM_DRG_CD;
+	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25 CLM_DRG_CD
+	ICD_PRCDR_CD1-ICD_PRCDR_CD25;
 
 	/* SORT INPATIENT REVENUE CENTER FILE IN PREPARATION FOR TRANSFORMATION */
 	proc sort data=ccw.inp_revenuek_lds_&year._&chunk. out=ip&year._&chunk.line; 
@@ -85,7 +86,8 @@ quit;
 
 %macro etl_lds_op(year=, chunk=);
 	%let opvars = DESY_SORT_KEY claim_no clm_thru_dt at_physn_npi bene_race_cd dob_dt gndr_cd
-	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25;
+	hcpcs_cd1-hcpcs_cd200 icd_dgns_cd1-icd_dgns_cd25
+	ICD_PRCDR_CD1-ICD_PRCDR_CD25;
 	/* SORT OUTPATIENT REVENUE CENTER FILE IN PREPARATION FOR TRANSFORMATION */
 	proc sort data=ccw.out_revenuek_lds_&year._&chunk. out=op&year._&chunk.line; 
 		by DESY_SORT_KEY claim_no clm_line_num; 

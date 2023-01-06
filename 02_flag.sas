@@ -96,6 +96,8 @@ quit;
 								'78461', '78464', '78465', '78478', '78480', '78459', '78481', '78483', '78491', 
 								'78492', '78494', '78496', '78499');
 %let xray43_cond = cptcode in ('71010', '71015','71020', '71021','71022','71030', '71035') ;
+%let tube_cond = cptcode in ('43246', '43653', '43750', '43830', '43832', '44372', '44373', '74350', '49440', '49411', '49446', 
+							'49450', '49451', '49452', '43760', '43761');
 
 /* diagnosis condition */
 %let crc_dx_cond = dxcode in :('Z121'); 
@@ -404,8 +406,9 @@ quit;
 							or ('T20'<=:dxcode<=:'T25')
 							or ('T51'<=:dxcode<=:'T65')
 							or ('V01'<=:dxcode<=:'V99')
-							or ('W00'<=:dxcode<=:'W36')
-;
+							or ('W00'<=:dxcode<=:'W36');
+%let dementia_dx_cond = dxcode in :('F0150', 'F0151', 'F0280', 'F0281', 'F0390', 'F05', 'F1027', 'G132', 
+							'G138', 'G30', 'G3101', 'G3109', 'G311', 'G312', 'G3183', 'G914', 'G94');
 
 
 
@@ -437,6 +440,12 @@ quit;
 						('955'<=:drg<=:'959') or
 						('969'<=:drg<=:'970') or
 						('981'<=:drg<=:'989');
+
+/* ICD-10-PCS conditions */
+%let tub_pcs_cond = pcs in ('0D16074', '0D160J4', '0D160K4', '0D160Z4', '0D163J4', 
+						'0D16474', '0D164J4', '0D164K4', '0D164Z4', '0D16874', '0D168J4', 
+						'0D168K4', '0D168Z4', '0DH60UZ', '0DH63UZ', '0DH64UZ', '0DW04UZ', 
+						'0DW08UZ');
 
 /********************************************************************************/
 /* flag conditions */
@@ -486,14 +495,16 @@ quit;
 				  cataract_betos diagnosis_42_dx
 				  diagnosis_41_dx
 				  xray43 diagnosis_43_dx
+				  tube_pcs tube dementia_dx
 				;
 
 %macro flag(clmtype=,year=, chunk=,);
 data flag.&clmtype._&year._&chunk._flag;
 	set etl.&clmtype._&year._&chunk.;
-	array hcpcscd(&num_cd.) hcpcs_cd1-hcpcs_cd&num_cd.;
-	array dxcodes(25) icd_dgns_cd1-icd_dgns_cd25;
-	array betoscd(&num_cd.) betos_cd1-betos_cd&num_cd.;
+	array hcpcscd(&num_cd.) $10 hcpcs_cd1-hcpcs_cd&num_cd.;
+	array dxcodes(25) $10 icd_dgns_cd1-icd_dgns_cd25;
+	array pcscodes(25) $10 ICD_PRCDR_CD1-ICD_PRCDR_CD25;
+	array betoscd(&num_cd.) $10 betos_cd1-betos_cd&num_cd.;
 
 	array _conditions &conditions;
 	
@@ -541,6 +552,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &echocard_cond then echocard=1;
 			if &advimg_cond then advimg=1;
 			if &xray43_cond then xray43=1;
+			if &tube_cond then tube=1;
 	  end;
 	end;
 
@@ -604,6 +616,7 @@ data flag.&clmtype._&year._&chunk._flag;
 			if &diagnosis_42_dx_cond then diagnosis_42_dx=1;
 			if &diagnosis_41_dx_cond then diagnosis_41_dx=1;
 			if &diagnosis_43_dx_cond then diagnosis_43_dx=1;
+			if &dementia_dx_cond then dementia_dx=1;
 	  end;
 	end;
 	
@@ -620,9 +633,20 @@ data flag.&clmtype._&year._&chunk._flag;
 	
 	%end;
 
-	%if &clmtype=ip %then %do;
+	%if &clmtype =ip %then %do;
   		drg = upcase(clm_drg_cd);
 		if &surgical_drg_cond then surgical_drg=1;
+	%end;
+
+	%if &clmtype=ip or &clmtype=op %then %do;
+	
+		do i=1 to dim(pcscodes);
+		  if not missing(pcscodes(i)) then do;
+		  		pcs = upcase(pcscodes(i));
+				if &tub_pcs_cond then tube_pcs=1;
+		  end;
+		end;
+	
 	%end;
 
 	dialysis = (dialysis_dx or dialysis_betos);
@@ -740,6 +764,9 @@ data flag.&clmtype._&year._&chunk._flag;
 	 diagnosis_41_dx = "ICD: Other warranted diagnosis for alg 41"
 	 xray43 = "HCPCS: chest x-ray for alg 43"
 	 diagnosis_43_dx = "ICD: Other warranted diagnosis for alg 43"
+	 tube_pcs ="ICD-PCS: Feeding tube"
+	 tube = "HCPCS: Feeding tube"
+	 dementia_dx = "ICD: Dementia"
 	;
 run;
 
